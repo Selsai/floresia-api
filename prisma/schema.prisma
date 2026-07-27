@@ -7,6 +7,124 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  role         Role      @default(USER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  addresses    Address[]
+  articles     Article[]
+  comments     Comment[]
+  orders       Order[]
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  label     String
+  fullName  String
+  street    String
+  city      String
+  zipCode   String
+  country   String   @default("France")
+  phone     String?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders    Order[]
+}
+
+model Product {
+  id             String          @id @default(cuid())
+  name           String
+  description    String
+  price          Float
+  imageUrl       String
+  category       ProductCategory
+  isCustomizable Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  orderItems     OrderItem[]
+}
+
+model Flower {
+  id          String   @id @default(cuid())
+  name        String
+  color       String
+  imageUrl    String
+  price       Float
+  createdAt   DateTime @default(now())
+  description String
+  stock       Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  userId      String
+  addressId   String
+  status      OrderStatus @default(PENDING)
+  totalAmount Float
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  address     Address     @relation(fields: [addressId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+  items       OrderItem[]
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  productId  String
+  quantity   Int     @default(1)
+  unitPrice  Float
+  customNote String?
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product    Product @relation(fields: [productId], references: [id])
+}
+
+model Article {
+  id        String    @id @default(cuid())
+  title     String
+  content   String
+  imageUrl  String?
+  category  String
+  authorId  String
+  createdAt DateTime  @default(now())
+  author    User      @relation(fields: [authorId], references: [id])
+  comments  Comment[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  articleId String
+  authorId  String
+  createdAt DateTime @default(now())
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id])
+}
+
+model GalleryPhoto {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  caption   String?
+  createdAt DateTime @default(now())
+}
+
+model Testimonial {
+  id         String   @id @default(cuid())
+  authorName String
+  content    String
+  imageUrl   String?
+  createdAt  DateTime @default(now())
+}
+
 enum Role {
   USER
   ADMIN
@@ -29,149 +147,4 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
-}
-
-model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  firstName    String
-  lastName     String
-  phone        String?
-  role         Role     @default(USER)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  addresses Address[]
-  orders    Order[]
-  articles  Article[]
-  comments  Comment[]
-}
-
-model Address {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  label     String
-  fullName  String
-  street    String
-  city      String
-  zipCode   String
-  country   String  @default("France")
-  phone     String?
-  isDefault Boolean @default(false)
-
-  orders Order[]
-
-  createdAt DateTime @default(now())
-}
-
-model Product {
-  id             String          @id @default(cuid())
-  name           String
-  description    String
-  price          Float
-  imageUrl       String
-  category       ProductCategory
-  isCustomizable Boolean         @default(true)
-
-  orderItems OrderItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Flower {
-  id       String @id @default(cuid())
-  name     String
-  color    String
-  imageUrl String
-  price    Float  @default(0)
-
-  createdAt DateTime @default(now())
-}
-
-model Order {
-  id String @id @default(cuid())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  addressId String
-  address   Address @relation(fields: [addressId], references: [id])
-
-  status OrderStatus @default(PENDING)
-
-  totalAmount Float
-
-  items OrderItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model OrderItem {
-  id String @id @default(cuid())
-
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
-
-  quantity  Int   @default(1)
-  unitPrice Float
-
-  customNote String?
-}
-
-model Article {
-  id String @id @default(cuid())
-
-  title    String
-  content  String
-  imageUrl String?
-
-  category String
-
-  authorId String
-  author   User   @relation(fields: [authorId], references: [id])
-
-  comments Comment[]
-
-  createdAt DateTime @default(now())
-}
-
-model Comment {
-  id String @id @default(cuid())
-
-  content String
-
-  articleId String
-  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
-
-  authorId String
-  author   User   @relation(fields: [authorId], references: [id])
-
-  createdAt DateTime @default(now())
-}
-
-model GalleryPhoto {
-  id String @id @default(cuid())
-
-  imageUrl String
-  caption  String?
-
-  createdAt DateTime @default(now())
-}
-
-model Testimonial {
-  id String @id @default(cuid())
-
-  authorName String
-  content    String
-  imageUrl   String?
-
-  createdAt DateTime @default(now())
 }
