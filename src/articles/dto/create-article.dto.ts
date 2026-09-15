@@ -1,19 +1,16 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsOptional, IsString } from 'class-validator';
 
 export class CreateArticleDto {
-  @IsString()
-  @IsNotEmpty()
-  title: string;
+  @IsString() title: string;
+  @IsString() excerpt: string;
+  @IsString() content: string;
+  @IsOptional() @IsString() imageUrl?: string;
+  @IsString() category: string;
+  @IsString() readTime: string;
+  @IsString() displayAuthorName: string;
+  @IsOptional() @IsString() displayAuthorBio?: string;
 
-  @IsString()
-  @IsNotEmpty()
-  content: string;
-
-  @IsOptional()
-  @IsString()
-  imageUrl?: string;
-
-  @IsString()
-  @IsNotEmpty()
-  category: string;
+  // Optionnel : uniquement pour le seed, permet de préserver une date de
+  // publication d'origine au lieu de la date réelle d'insertion en base.
+  @IsOptional() @IsDateString() createdAt?: string;
 }

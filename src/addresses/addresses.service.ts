@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
@@ -56,7 +61,16 @@ export class AddressesService {
     if (!address) throw new NotFoundException('Adresse introuvable.');
     if (address.userId !== userId) throw new ForbiddenException('Accès refusé.');
 
-    await this.prisma.address.delete({ where: { id: addressId } });
-    return { message: 'Adresse supprimée avec succès.' };
+    try {
+      await this.prisma.address.delete({ where: { id: addressId } });
+      return { message: 'Adresse supprimée avec succès.' };
+    } catch (err: any) {
+      if (err?.code === 'P2003' || err?.code === 'P2014') {
+        throw new BadRequestException(
+          'Cette adresse est liée à une ou plusieurs commandes passées et ne peut pas être supprimée.'
+        );
+      }
+      throw err;
+    }
   }
 }

@@ -1,81 +1,77 @@
 import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
+  Body, Controller, Delete, Get, Param, Post, UploadedFile,
+  UseGuards, UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto } from './dto/update-comment.dto';
-
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles/roles.guard';
+import { Roles } from '../auth/roles/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
+@ApiTags('Comments')
 @Controller('comments')
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
-
-  // =========================
-  // Tous les commentaires d'un article
-  // GET /comments/article/:articleId
-  // =========================
 
   @Get('article/:articleId')
   findByArticle(@Param('articleId') articleId: string) {
     return this.commentsService.findByArticle(articleId);
   }
 
-  // =========================
-  // Un commentaire par ID
-  // GET /comments/:id
-  // =========================
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.commentsService.findOne(id);
+  @Get('article/:articleId/commenters')
+  getCommenters(@Param('articleId') articleId: string) {
+    return this.commentsService.getCommentersForArticle(articleId);
   }
 
-  // =========================
-  // Créer un commentaire
-  // POST /comments
-  // =========================
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Get('admin/all')
+  findAllForAdmin() {
+    return this.commentsService.findAllForAdmin();
+  }
 
+  @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
   @UseGuards(JwtAuthGuard)
   @Post()
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: './uploads/comments',
+        filename: (req, file, cb) => {
+          const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
+          cb(null, uniqueName);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|webp)$/)) {
+          return cb(new Error('Seules les images JPG, PNG ou WEBP sont acceptées.'), false);
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
   create(
     @CurrentUser() user: any,
     @Body() dto: CreateCommentDto,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.commentsService.create(user.sub, dto);
+    const imageUrl = file ? `/uploads/comments/${file.filename}` : undefined;
+    return this.commentsService.create(user.userId, dto, imageUrl);
   }
 
-  // =========================
-  // Modifier un commentaire
-  // PATCH /comments/:id
-  // =========================
-
-  @UseGuards(JwtAuthGuard)
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() dto: UpdateCommentDto,
-  ) {
-    return this.commentsService.update(id, dto);
-  }
-
-  // =========================
-  // Supprimer un commentaire
-  // DELETE /comments/:id
-  // =========================
-
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.commentsService.remove(id);
+  remove(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.commentsService.remove(id, user.userId, user.role);
   }
 }

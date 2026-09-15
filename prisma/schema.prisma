@@ -3,40 +3,53 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  firstName    String
-  lastName     String
-  phone        String?
-  role         Role      @default(USER)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  addresses    Address[]
-  articles     Article[]
-  comments     Comment[]
-  orders       Order[]
+  id                      String     @id @default(cuid())
+  email                   String     @unique
+  passwordHash            String
+  firstName               String
+  lastName                String
+  phone                   String?
+  role                    Role       @default(USER)
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
+  isEmailVerified         Boolean    @default(false)
+  resetToken              String?
+  resetTokenExpires       DateTime?
+  verificationCode        String?
+  verificationCodeExpires DateTime?
+  addresses               Address[]
+  articles                Article[]
+  comments                Comment[]  @relation("CommentAuthor")
+  taggedInComments        Comment[]  @relation("CommentTagged")
+  favorites               Favorite[]
+  orders                  Order[]
+  testimonials  Testimonial[]
+  galleryPhotos GalleryPhoto[]
 }
 
 model Address {
-  id        String   @id @default(cuid())
-  userId    String
-  label     String
-  fullName  String
-  street    String
-  city      String
-  zipCode   String
-  country   String   @default("France")
-  phone     String?
-  isDefault Boolean  @default(false)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orders    Order[]
+  id         String   @id @default(cuid())
+  userId     String
+  label      String
+  fullName   String
+  street     String
+  city       String
+  zipCode    String
+  country    String   @default("France")
+  phone      String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  lat        Float?
+  lng        Float?
+  complement String?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders     Order[]
 }
 
 model Product {
@@ -49,6 +62,7 @@ model Product {
   isCustomizable Boolean         @default(true)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  favorites      Favorite[]
   orderItems     OrderItem[]
 }
 
@@ -65,16 +79,18 @@ model Flower {
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  userId      String
-  addressId   String
-  status      OrderStatus @default(PENDING)
-  totalAmount Float
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  address     Address     @relation(fields: [addressId], references: [id])
-  user        User        @relation(fields: [userId], references: [id])
-  items       OrderItem[]
+  id             String         @id @default(cuid())
+  userId         String
+  addressId      String
+  status         OrderStatus    @default(PENDING)
+  totalAmount    Float
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deliveryMethod DeliveryMethod @default(DELIVERY)
+  pickupStoreId  String?
+  address        Address        @relation(fields: [addressId], references: [id])
+  user           User           @relation(fields: [userId], references: [id])
+  items          OrderItem[]
 }
 
 model OrderItem {
@@ -89,32 +105,35 @@ model OrderItem {
 }
 
 model Article {
-  id        String    @id @default(cuid())
-  title     String
-  content   String
-  imageUrl  String?
-  category  String
-  authorId  String
-  createdAt DateTime  @default(now())
-  author    User      @relation(fields: [authorId], references: [id])
-  comments  Comment[]
+  id                String    @id @default(cuid())
+  title             String
+  content           String
+  imageUrl          String?
+  category          String
+  authorId          String
+  createdAt         DateTime  @default(now())
+  displayAuthorBio  String?
+  displayAuthorName String
+  excerpt           String
+  readTime          String
+  author            User      @relation(fields: [authorId], references: [id])
+  comments          Comment[]
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  content   String
-  articleId String
-  authorId  String
-  createdAt DateTime @default(now())
-  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  author    User     @relation(fields: [authorId], references: [id])
-}
-
-model GalleryPhoto {
-  id        String   @id @default(cuid())
-  imageUrl  String
-  caption   String?
-  createdAt DateTime @default(now())
+  id           String    @id @default(cuid())
+  content      String
+  articleId    String
+  authorId     String
+  createdAt    DateTime  @default(now())
+  imageUrl     String?
+  parentId     String?
+  taggedUserId String?
+  article      Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  author       User      @relation("CommentAuthor", fields: [authorId], references: [id])
+  parent       Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies      Comment[] @relation("CommentReplies")
+  taggedUser   User?     @relation("CommentTagged", fields: [taggedUserId], references: [id])
 }
 
 model Testimonial {
@@ -122,7 +141,34 @@ model Testimonial {
   authorName String
   content    String
   imageUrl   String?
+  rating     Int      @default(5)
+  occasion   String?
+  authorId   String?
   createdAt  DateTime @default(now())
+
+  author     User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+}
+
+model GalleryPhoto {
+  id              String   @id @default(cuid())
+  imageUrl        String
+  caption         String?
+  instagramHandle String?
+  authorId        String?
+  createdAt       DateTime @default(now())
+
+  author          User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
 }
 
 enum Role {
@@ -147,4 +193,9 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+}
+
+enum DeliveryMethod {
+  DELIVERY
+  PICKUP
 }

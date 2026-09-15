@@ -1,23 +1,14 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
-import { UpdateArticleDto } from './dto/update-article.dto';
-
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { Roles } from '../auth/roles/roles.decorator';
 import { RolesGuard } from '../auth/roles/roles.guard';
+import { Roles } from '../auth/roles/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
+@ApiTags('Articles')
 @Controller('articles')
 export class ArticlesController {
   constructor(private readonly articlesService: ArticlesService) {}
@@ -32,26 +23,15 @@ export class ArticlesController {
     return this.articlesService.findOne(id);
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Post()
-  create(
-    @CurrentUser() user: any,
-    @Body() dto: CreateArticleDto,
-  ) {
-    return this.articlesService.create(user.sub, dto);
+  create(@CurrentUser() user: any, @Body() dto: CreateArticleDto) {
+    return this.articlesService.create(user.userId, dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() dto: UpdateArticleDto,
-  ) {
-    return this.articlesService.update(id, dto);
-  }
-
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Delete(':id')

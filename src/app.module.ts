@@ -13,6 +13,8 @@ import { ArticlesModule } from './articles/articles.module';
 import { CommentsModule } from './comments/comments.module';
 import { OrdersModule } from './orders/orders.module';
 import { UsersModule } from './users/users.module';
+import { PaymentModule } from './payment/payment.module';
+import { FavoritesModule } from './favorites/favorites.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { UsersModule } from './users/users.module';
     CommentsModule,
     OrdersModule,
     UsersModule,
+    PaymentModule,
+    FavoritesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
