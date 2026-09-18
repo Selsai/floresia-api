@@ -22,6 +22,7 @@
     "seed": "node scripts/seed-products.mjs"
   },
   "dependencies": {
+    "@google/genai": "^2.22.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",

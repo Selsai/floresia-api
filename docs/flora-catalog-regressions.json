@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-09-17T23:30:51.066Z",
+  "results": [
+    {
+      "question": "Quels bouquets Florésia peux-tu me recommander pour un mariage ?",
+      "reply": "Pour un mariage, voici des bouquets du catalogue Florésia :\n• Romance – Parfait bouquet de mariage — 32,00 €\n• Éveil – Bouquet romantique pour mariage — 45,00 €\n• Soleil – Bouquet lumineux pour mariage — 38,00 €\n• Champêtre – Bouquet bohème pour mariage — 65,00 €\nCes prix sont hors livraison ; les disponibilités sont à vérifier dans la boutique."
+    },
+    {
+      "question": "Quel est le prix du bouquetJardin Secret – Idéal pour un anniversaire",
+      "reply": "Le bouquet « Jardin Secret – Idéal pour un anniversaire » coûte 52,00 €, hors livraison."
+    },
+    {
+      "question": "le prix de ce bouquet : Éveil – Bouquet romantique pour mariage ?",
+      "reply": "Le bouquet « Éveil – Bouquet romantique pour mariage » coûte 45,00 €, hors livraison."
+    },
+    {
+      "question": "Quel bouquet puis-je acheter pour 1 € ?",
+      "reply": "Avec un budget de 1,00 €, aucun bouquet prêt du catalogue ni fleur principale disponible ne convient actuellement. Les fleurs principales pour la personnalisation commencent à 2,00 € la tige. Vous pourrez utiliser « Personnalisation » si vous souhaitez augmenter votre budget."
+    },
+    {
+      "question": "Comment créer un bouquet personnalisé sur Florésia ?",
+      "reply": "Cliquez sur « Personnalisation » dans le menu du site. Choisissez votre occasion, puis vos fleurs, leurs couleurs et le nombre de tiges ; les compléments sont optionnels et facturés à l'unité. Vous pouvez ensuite choisir un ruban, ajouter un message et placer votre bouquet dans le panier."
+    },
+    {
+      "question": "Puis-je composer un bouquet sans feuillage ?",
+      "reply": "Oui, vous pouvez composer un bouquet sans feuillage. Les feuillages et fleurs secondaires sont optionnels : à l'étape « Compléments », cliquez simplement sur « Suivant » sans en sélectionner."
+    },
+    {
+      "question": "Trois roses à 3,50 € et une tige d’eucalyptus à 2 € : quel est le total hors livraison ?",
+      "reply": "Avec les prix indiqués, 3 × 3,50 € + 1 × 2,00 € = 12,50 € pour ces éléments, hors livraison. Chaque complément est compté à l'unité, sans lot."
+    }
+  ]
+}

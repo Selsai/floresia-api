@@ -1,10 +1,16 @@
 import {
   IsNumber,
+  IsBoolean,
+  IsOptional,
   IsString,
   Min,
 } from 'class-validator';
 
 export class CreateFlowerDto {
+  @IsOptional()
+  @IsBoolean()
+  isSecondary?: boolean;
+
   @IsString()
   name: string;
 

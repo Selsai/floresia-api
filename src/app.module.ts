@@ -15,6 +15,7 @@ import { OrdersModule } from './orders/orders.module';
 import { UsersModule } from './users/users.module';
 import { PaymentModule } from './payment/payment.module';
 import { FavoritesModule } from './favorites/favorites.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { FavoritesModule } from './favorites/favorites.module';
     UsersModule,
     PaymentModule,
     FavoritesModule,
+    ChatbotModule,
   ],
   controllers: [AppController],
   providers: [AppService],
