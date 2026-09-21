@@ -32,12 +32,18 @@ console.log(
 app.useStaticAssets(join(process.cwd(), 'uploads'), {
   prefix: '/uploads',
 });
-  // CORS : autorise uniquement le front-end Florésia à appeler l'API
+  // FRONTEND_URL sert aussi à autoriser le domaine public une fois déployé.
+  const allowedOrigins = [
+    'http://localhost:4200',
+    'http://localhost:5173',
+    'http://127.0.0.1:4200',
+    'http://127.0.0.1:5173',
+  ];
+  if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(new URL(process.env.FRONTEND_URL).origin);
+  }
   app.enableCors({
-    origin: [
-      'http://localhost:4200',
-      'http://localhost:5173',
-    ],
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,

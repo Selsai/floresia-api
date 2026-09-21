@@ -8,7 +8,9 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
+import type { RawBodyRequest } from '@nestjs/common';
 
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { PaymentService } from './payment.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
@@ -22,16 +24,21 @@ export class PaymentController {
   @ApiBody({ type: CreateCheckoutSessionDto })
   @UseGuards(JwtAuthGuard)
   @Post('checkout-session')
-  createCheckoutSession(@Body() dto: CreateCheckoutSessionDto) {
-    return this.paymentService.createCheckoutSession(dto.orderId);
+  createCheckoutSession(
+    @Body() dto: CreateCheckoutSessionDto,
+    @CurrentUser() user: { userId: string },
+  ) {
+    return this.paymentService.createCheckoutSession(dto.orderId, user.userId);
   }
 
-@Post('webhook')
-handleWebhook(
-  @Req() req: Request,
-  @Headers('stripe-signature') signature: string,
-) {
-  return this.paymentService.handleWebhookEvent(req.body, signature);
-}
-
+  @Post('webhook')
+  handleWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers('stripe-signature') signature: string,
+  ) {
+    return this.paymentService.handleWebhookEvent(
+      req.rawBody ?? req.body,
+      signature,
+    );
+  }
 }

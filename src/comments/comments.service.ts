@@ -77,6 +77,9 @@ export class CommentsService {
         where: { id: dto.parentId },
       });
 
+      if (parent && parent.articleId !== dto.articleId) {
+        throw new ForbiddenException('Le commentaire parent appartient à un autre article.');
+      }
       if (!parent) {
         throw new NotFoundException('Commentaire parent introuvable.');
       }

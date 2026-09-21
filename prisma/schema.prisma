@@ -76,6 +76,7 @@ model Flower {
   description String
   stock       Int      @default(0)
   updatedAt   DateTime @updatedAt
+  isSecondary Boolean  @default(false)
 }
 
 model Order {

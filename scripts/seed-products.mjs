@@ -1,6 +1,6 @@
 // seed-products.mjs
 const API_URL = 'http://localhost:3000';
-const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXR1ajk5aXQwMDAwOGhvNDVia20za2c1IiwiZW1haWwiOiJzZWxzYWJpbGFtYWlyaUBnbWFpbC5jb20iLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3ODg5ODY2ODcsImV4cCI6MTc4OTU5MTQ4N30.I_RJ-iZkvO-PnvDgPrInmxxDUrubPoveeWAIXCF-cUI';
+const TOKEN = process.env.ADMIN_TOKEN;
 
 const products = [
   {
