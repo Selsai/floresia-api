@@ -1,48 +1,68 @@
+import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
   IsArray,
-  IsEnum,
+  IsIn,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
+  Max,
+  MaxLength,
+  Min,
   ValidateNested,
 } from 'class-validator';
 
-import { Type } from 'class-transformer';
+export class BouquetFlowerDto {
+  @IsString() @IsNotEmpty() flowerId: string;
+  @IsInt() @Min(1) @Max(1000) quantity: number;
+}
 
-class OrderItemDto {
-  @IsString()
-  productId: string;
+export class CustomBouquetDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(100)
+  @ValidateNested({ each: true })
+  @Type(() => BouquetFlowerDto)
+  flowers: BouquetFlowerDto[];
 
-  @IsNumber()
-  quantity: number;
+  @IsOptional() @IsString() @MaxLength(100) occasionName?: string;
+  @IsOptional() @IsString() @MaxLength(50) ribbonColor?: string;
+  @IsOptional() @IsString() @MaxLength(500) message?: string;
+}
 
-  @IsNumber()
-  unitPrice: number;
+export class OrderItemDto {
+  @IsString() @IsNotEmpty() productId: string;
+  @IsInt() @Min(1) @Max(100) quantity: number;
+
+  // Compatibilité avec les anciens clients ; le serveur ignore ce prix.
+  @IsOptional() @IsNumber() @Min(0) unitPrice?: number;
+  @IsOptional() @IsString() @MaxLength(2000) customNote?: string;
 
   @IsOptional()
-  @IsString()
-  customNote?: string;
+  @ValidateNested()
+  @Type(() => CustomBouquetDto)
+  customBouquet?: CustomBouquetDto;
 }
 
 export class CreateOrderDto {
-  @IsString()
-  addressId: string;
+  @IsString() @IsNotEmpty() addressId: string;
 
-  @IsNumber()
-  totalAmount: number;
+  // Le total est recalculé par le serveur, jamais accepté comme référence.
+  @IsOptional() @IsNumber() @Min(0) totalAmount?: number;
 
   @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(100)
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items: OrderItemDto[];
 
-  // Méthode de livraison / retrait
-  @IsEnum(['DELIVERY', 'PICKUP'])
   @IsOptional()
+  @IsIn(['DELIVERY', 'PICKUP'])
   deliveryMethod?: 'DELIVERY' | 'PICKUP';
 
-  @IsString()
-  @IsOptional()
-  pickupStoreId?: string;
+  @IsOptional() @IsString() @IsNotEmpty() pickupStoreId?: string;
 }

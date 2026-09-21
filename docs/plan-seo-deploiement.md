@@ -1,0 +1,28 @@
+﻿# SEO et mise en ligne de Florésia — preuves à réunir
+
+Florésia est actuellement une démonstration pédagogique. Le domaine `floresia.fr` est acheté, mais un nom de domaine ne prouve pas que le site et l'API sont hébergés ou indexés. Cette liste reprend le critère C20 de la grille : balises et contenu, outil de mesure pertinent et fonctionnel, puis au moins 70 % des critères techniques SEO. Ce pourcentage n'est pas le score Lighthouse ; il faudra définir une grille de contrôle explicite et indiquer le nombre de points conformes.
+
+## Avant le déploiement
+
+1. Dans hPanel Hostinger, vérifier la formule d'hébergement. Le front Vite peut être publié comme site statique. Le back NestJS nécessite un hébergement Node.js compatible, une base PostgreSQL et des variables d'environnement. Une formule Business/Cloud ou un VPS peut être nécessaire selon le plan. Conserver une capture de la formule et du type de site, sans informations de paiement.
+2. Définir l'URL publique de l'API, par exemple `https://api.floresia.fr` si ce sous-domaine est réellement configuré. Pour le front, construire avec `VITE_BASE_PATH=/`, `VITE_SITE_URL=https://floresia.fr`, `VITE_API_URL=<URL réelle de l'API>` et les coordonnées publiques. Pour l'API, configurer `FRONTEND_URL=https://floresia.fr`. Garder toutes les clés secrètes côté serveur et hors Git. La commande `npm.cmd run build` génère `dist/`, ainsi que `sitemap.xml` et `robots.txt` seulement quand `VITE_SITE_URL` est défini.
+3. Publier les fichiers de `dist/` à la racine du site. Vérifier que les accès directs à `/boutique`, `/blog` et `/mentions-legales` rechargent la bonne page. Le fichier `.htaccess` ajouté au build sert de repli pour un hébergement Apache ; confirmer que l'hébergement retenu applique réellement cette règle.
+4. Vérifier HTTPS, la redirection HTTP vers HTTPS, la variante `www` vers l'URL canonique choisie, le certificat, l'accès à l'API, les images, les formulaires et les liens du footer. Ne déclarer aucun achat réel : Stripe reste en mode test.
+
+## Contrôles SEO après mise en ligne
+
+5. Ouvrir `https://floresia.fr/robots.txt` et `https://floresia.fr/sitemap.xml`. Vérifier que toutes les URL listées répondent sur le domaine final et que les pages de compte, panier, paiement et administration ne sont pas dans le sitemap. Le sitemap initial ne liste que les routes publiques fixes ; les fiches produits et articles devront être ajoutées lorsque leurs URL pérennes seront vérifiées.
+6. Sur l'accueil, la boutique, un article, une fiche produit et les pages d'information, contrôler dans le navigateur le titre, la description, le H1 unique, les noms d'images et leurs textes alternatifs, les liens internes et l'URL canonique. Le projet React actuel change les métadonnées après exécution de JavaScript ; inspecter aussi le HTML renvoyé par le serveur. Si les contenus ne sont pas accessibles aux robots ou sont mal rendus, prévoir un pré-rendu ou un rendu serveur avant de conclure que l'indexation est fiable.
+7. Dans [Google Search Console](https://search.google.com/search-console), ajouter la propriété Domaine `floresia.fr`. Copier le TXT de vérification fourni par Google dans la zone DNS de Hostinger, puis vérifier la propriété. Soumettre `https://floresia.fr/sitemap.xml`. Utiliser Inspection de l'URL sur l'accueil et au moins deux pages profondes, puis consulter Indexation et Performances. La vérification DNS et les rapports Search Console mesurent le site sans installer de script de suivi sur les visiteurs.
+8. Mesurer les pages clés dans [PageSpeed Insights](https://pagespeed.web.dev/) en mobile et ordinateur, puis vérifier les problèmes d'accessibilité et de performance dans Lighthouse. Les grandes images et le bundle JavaScript actuellement signalés par Vite devront être optimisés avant la mesure finale. Relever les valeurs observées, sans promettre une position dans Google.
+9. Construire un tableau de critères : HTTPS et redirections, robots et sitemap, indexabilité, balises title/description, un H1 pertinent, URL canonique, liens internes, images/alt, affichage mobile, Core Web Vitals, contenu utile et cohérent avec une démonstration, Search Console opérationnelle. Pour chaque critère, indiquer conforme/non conforme, la preuve et la correction. Calculer `conformes / critères applicables × 100`; viser au moins 70 % pour documenter C20, sans confondre ce ratio avec une note PageSpeed.
+
+## Captures à conserver pour le mémoire
+
+- Hostinger : site et sous-domaine API raccordés, DNS/SSL actifs (masquer les identifiants et secrets).
+- Navigateur : pages publiques sur HTTPS, H1, titre/description et canonical ; `robots.txt` et `sitemap.xml` accessibles.
+- Search Console : propriété vérifiée, sitemap accepté, inspection d'une URL indexable, rapport Performances lorsqu'il contient des données. Un rapport vide juste après mise en ligne ne prouve pas un échec.
+- PageSpeed Insights : résultats mobile et ordinateur avec date et URL ; refaire les mesures après optimisation des images et du JavaScript.
+- Tableau C20 daté avec preuves, écarts et ratio atteint.
+
+Documentation : grille RNCP38606 C20 fournie en pièce jointe, [Google Search Central — SEO](https://developers.google.com/search/docs/fundamentals/seo-starter-guide), [Search Console](https://developers.google.com/search/docs/monitor-debug/search-console-start), [sitemaps](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap), [SEO des sites JavaScript](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics), [hébergement Node.js Hostinger](https://www.hostinger.com/support/node-js-hosting-options-at-hostinger/).

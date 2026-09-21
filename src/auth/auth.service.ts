@@ -326,10 +326,6 @@ export class AuthService {
     // http://localhost:5173/floresia-app
     const resetLink = `${process.env.FRONTEND_URL}/reinitialiser-mot-de-passe?token=${token}`;
 
-    console.log(
-      `[DEV] Lien de réinitialisation pour ${normalizedEmail} : ${resetLink}`,
-    );
-
     await this.mailService.sendPasswordResetLink(
       normalizedEmail,
       resetLink,
@@ -338,7 +334,6 @@ export class AuthService {
     return {
       message:
         'Si un compte existe avec cet email, un lien a été envoyé.',
-      devToken: token,
     };
   }
 

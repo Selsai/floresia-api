@@ -1,18 +1,24 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import request from 'supertest';
 import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
+import { createHttpFixture } from '../../test/http-fixture';
+describe('UsersController : contrats HTTP et droits', () => {
+  let fixture: Awaited<ReturnType<typeof createHttpFixture>>;
+  const service = { findAll: jest.fn().mockResolvedValue([]), findByArticle: jest.fn().mockResolvedValue([]), remove: jest.fn().mockResolvedValue({ message: 'deleted' }) };
+  beforeAll(async () => { fixture = await createHttpFixture(UsersController, UsersService, service); });
+  afterAll(async () => { await fixture.app.close(); });
+  beforeEach(() => { jest.clearAllMocks(); });
 
-describe('UsersController', () => {
-  let controller: UsersController;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [UsersController],
-    }).compile();
-
-    controller = module.get<UsersController>(UsersController);
+  it('refuse une suppression sans authentification', async () => {
+    await request(fixture.app.getHttpServer()).delete('/users/p').expect(401);
+    expect(service.remove).not.toHaveBeenCalled();
   });
-
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
+  it('applique les droits du compte utilisateur', async () => {
+    await request(fixture.app.getHttpServer()).delete('/users/p').set('Authorization', 'Bearer ' + fixture.userToken).expect(403);
+    expect(service.remove).not.toHaveBeenCalled();
+  });
+  it('autorise la suppression par un administrateur', async () => {
+    await request(fixture.app.getHttpServer()).delete('/users/p').set('Authorization', 'Bearer ' + fixture.adminToken).expect(200);
+    expect(service.remove).toHaveBeenCalledTimes(1);
   });
 });
