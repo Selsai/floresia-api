@@ -2,7 +2,7 @@
 const API_URL = 'http://localhost:3000';
 const TOKEN = process.env.ADMIN_TOKEN;
 
-const IMG_BASE = '/floresia-app/flowers';
+const IMG_BASE = '/flowers';
 
 const flowers = [
   // ── Rose ──

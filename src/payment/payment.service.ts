@@ -97,8 +97,8 @@ export class PaymentService {
       metadata: {
         orderId: order.id,
       },
-      success_url: `${frontendUrl}/floresia-app/commande/succes?orderId=${order.id}`,
-      cancel_url: `${frontendUrl}/floresia-app/commande/annulee?orderId=${order.id}`,
+      success_url: `${frontendUrl}/commande/succes?orderId=${order.id}`,
+      cancel_url: `${frontendUrl}/commande/annulee?orderId=${order.id}`,
     });
 
     return {
