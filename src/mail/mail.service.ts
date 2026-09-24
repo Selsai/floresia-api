@@ -13,16 +13,18 @@ const mailLayout = (title: string, intro: string, content: string, footer: strin
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fbf7f4; padding:28px 12px;">
         <tr><td align="center">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px; overflow:hidden; border:1px solid #efd8e2; border-radius:24px; background:#ffffff; box-shadow:0 16px 40px rgba(61,37,48,.08);">
-            <tr><td align="center" style="padding:28px 28px 24px; background:linear-gradient(135deg,#fff8fa,#f8eaf0); border-bottom:1px solid #efd8e2;">
-              <img src="https://floresia.fr/logo-floresia.png" width="66" height="66" alt="Logo Florésia" style="display:block; width:66px; height:66px; margin:0 auto 10px; object-fit:contain;" />
-              <div style="font-family:Georgia,'Times New Roman',serif; color:#b03070; font-size:30px; font-weight:700; line-height:1.2;">Florésia</div>
-              <div style="margin-top:6px; color:#5c8a4e; font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;">Un jardin d’idées, imaginé avec passion</div>
+            <tr><td align="center" style="padding:26px 28px 22px; background:#fff7fa; border-bottom:1px solid #efd8e2;">
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto;"><tr>
+                <td style="padding-right:10px; vertical-align:middle;"><img src="https://floresia.fr/logo-floresia.png" width="50" height="50" alt="" style="display:block; width:50px; height:50px; border:0; object-fit:contain;" /></td>
+                <td style="vertical-align:middle; font-family:Georgia,'Times New Roman',serif; color:#b03070; font-size:31px; font-weight:700; line-height:1.2;">Florésia</td>
+              </tr></table>
+              <div style="margin-top:9px; color:#4f7b43; font-size:11px; font-weight:700; letter-spacing:1.3px; text-transform:uppercase;">Un jardin d’idées, imaginé avec passion</div>
             </td></tr>
-            <tr><td style="padding:32px 30px;">
-              <h1 style="margin:0 0 12px; color:#3d2530; font-family:Georgia,'Times New Roman',serif; font-size:27px; line-height:1.25;">${title}</h1>
-              <p style="margin:0 0 24px; color:#7a5c66; font-size:16px; line-height:1.65;">${intro}</p>
+            <tr><td align="center" style="padding:34px 30px 30px;">
+              <h1 style="margin:0 0 13px; color:#3d2530; font-family:Georgia,'Times New Roman',serif; font-size:27px; line-height:1.25; text-align:center;">${title}</h1>
+              <p style="margin:0 auto 25px; max-width:430px; color:#7a5c66; font-size:16px; line-height:1.65; text-align:center;">${intro}</p>
               ${content}
-              <p style="margin:26px 0 0; padding-top:20px; border-top:1px solid #efd8e2; color:#8c717a; font-size:13px; line-height:1.55;">${footer}</p>
+              <p style="margin:27px 0 0; padding-top:20px; border-top:1px solid #efd8e2; color:#8c717a; font-size:13px; line-height:1.55; text-align:center;">${footer}</p>
             </td></tr>
           </table>
           <p style="margin:16px 0 0; color:#9d858d; font-size:12px;">Message automatique envoyé par Florésia.</p>
@@ -59,9 +61,9 @@ export class MailService {
       html: mailLayout(
         'Réinitialisez votre mot de passe',
         'Vous avez demandé à choisir un nouveau mot de passe pour votre compte Florésia.',
-        `<p style="margin:0; text-align:center;">
-           <a href="${escapeHtml(resetUrl)}" style="display:inline-block; padding:14px 24px; border-radius:999px; background:#c0478a; color:#ffffff; font-size:15px; font-weight:700; text-decoration:none;">Réinitialiser mon mot de passe</a>
-         </p>
+        `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto;"><tr><td align="center" bgcolor="#c0478a" style="border-radius:999px;">
+           <a href="${escapeHtml(resetUrl)}" style="display:inline-block; padding:14px 25px; border:1px solid #c0478a; border-radius:999px; background:#c0478a; color:#ffffff; font-size:15px; font-weight:700; line-height:1.2; text-decoration:none;">Réinitialiser mon mot de passe</a>
+         </td></tr></table>
          <p style="margin:18px 0 0; color:#5c8a4e; font-size:14px; font-weight:700; text-align:center;">Ce lien est valable pendant 1 heure.</p>`,
         'Si vous n’êtes pas à l’origine de cette demande, ignorez cet email : votre mot de passe restera inchangé.',
       ),
