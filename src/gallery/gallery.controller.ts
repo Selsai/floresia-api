@@ -1,6 +1,15 @@
 import {
-  Body, Controller, Delete, Get, Param, Patch, Post,
-  UploadedFile, UseGuards, UseInterceptors, BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -14,7 +23,10 @@ import { UpdateGalleryPhotoDto } from './dto/update-gallery-photo.dto';
 import { SubmitGalleryPhotoDto } from './dto/submit-gallery-photo.dto';
 import { Roles } from '../auth/roles/roles.decorator';
 import { RolesGuard } from '../auth/roles/roles.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type AuthenticatedUser,
+} from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Gallery')
 @Controller('gallery')
@@ -54,7 +66,10 @@ export class GalleryController {
       }),
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|webp)$/)) {
-          return cb(new Error('Seules les images JPG, PNG ou WEBP sont acceptées.'), false);
+          return cb(
+            new Error('Seules les images JPG, PNG ou WEBP sont acceptées.'),
+            false,
+          );
         }
         cb(null, true);
       },
@@ -62,7 +77,7 @@ export class GalleryController {
     }),
   )
   submit(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() dto: SubmitGalleryPhotoDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
@@ -82,7 +97,7 @@ export class GalleryController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: any) {
+  remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.galleryService.remove(id, user.userId, user.role);
   }
 }

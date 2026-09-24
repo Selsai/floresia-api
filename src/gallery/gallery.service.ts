@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateGalleryPhotoDto } from './dto/create-gallery-photo.dto';
 import { UpdateGalleryPhotoDto } from './dto/update-gallery-photo.dto';
@@ -9,7 +13,9 @@ export class GalleryService {
   constructor(private prisma: PrismaService) {}
 
   findAll() {
-    return this.prisma.galleryPhoto.findMany({ orderBy: { createdAt: 'desc' } });
+    return this.prisma.galleryPhoto.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findOne(id: string) {
@@ -31,7 +37,9 @@ export class GalleryService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
     if (!user.isEmailVerified) {
-      throw new ForbiddenException('Veuillez vérifier votre adresse email avant de pouvoir partager une photo.');
+      throw new ForbiddenException(
+        'Veuillez vérifier votre adresse email avant de pouvoir partager une photo.',
+      );
     }
 
     return this.prisma.galleryPhoto.create({
@@ -48,7 +56,9 @@ export class GalleryService {
     const photo = await this.findOne(id);
 
     if (role !== 'ADMIN' && photo.authorId !== userId) {
-      throw new ForbiddenException('Vous ne pouvez supprimer que votre propre photo.');
+      throw new ForbiddenException(
+        'Vous ne pouvez supprimer que votre propre photo.',
+      );
     }
 
     await this.prisma.galleryPhoto.delete({ where: { id } });

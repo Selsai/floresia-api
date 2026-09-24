@@ -18,20 +18,17 @@ async function bootstrap() {
 
   // Helmet : ajoute des en-têtes HTTP de sécurité
   app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: 'cross-origin' },
-  }),
-);
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
 
-// Servir les images uploadées
-console.log(
-  'Dossier uploads servi depuis :',
-  join(process.cwd(), 'uploads'),
-);
+  // Servir les images uploadées
+  console.log('Dossier uploads servi depuis :', join(process.cwd(), 'uploads'));
 
-app.useStaticAssets(join(process.cwd(), 'uploads'), {
-  prefix: '/uploads',
-});
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads',
+  });
   // FRONTEND_URL sert aussi à autoriser le domaine public une fois déployé.
   const allowedOrigins = [
     'http://localhost:4200',
@@ -87,4 +84,4 @@ app.useStaticAssets(join(process.cwd(), 'uploads'), {
   );
 }
 
-bootstrap();
+void bootstrap();

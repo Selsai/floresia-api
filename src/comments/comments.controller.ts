@@ -1,6 +1,13 @@
 import {
-  Body, Controller, Delete, Get, Param, Post, UploadedFile,
-  UseGuards, UseInterceptors,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -12,7 +19,10 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles/roles.guard';
 import { Roles } from '../auth/roles/roles.decorator';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type AuthenticatedUser,
+} from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Comments')
 @Controller('comments')
@@ -52,7 +62,10 @@ export class CommentsController {
       }),
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|webp)$/)) {
-          return cb(new Error('Seules les images JPG, PNG ou WEBP sont acceptées.'), false);
+          return cb(
+            new Error('Seules les images JPG, PNG ou WEBP sont acceptées.'),
+            false,
+          );
         }
         cb(null, true);
       },
@@ -60,7 +73,7 @@ export class CommentsController {
     }),
   )
   create(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateCommentDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
@@ -71,7 +84,7 @@ export class CommentsController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: any) {
+  remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.commentsService.remove(id, user.userId, user.role);
   }
 }

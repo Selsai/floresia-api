@@ -1,5 +1,6 @@
 import {
   Controller,
+  BadRequestException,
   Post,
   Body,
   Req,
@@ -36,9 +37,9 @@ export class PaymentController {
     @Req() req: RawBodyRequest<Request>,
     @Headers('stripe-signature') signature: string,
   ) {
-    return this.paymentService.handleWebhookEvent(
-      req.rawBody ?? req.body,
-      signature,
-    );
+    if (!req.rawBody) {
+      throw new BadRequestException('Corps brut du webhook indisponible.');
+    }
+    return this.paymentService.handleWebhookEvent(req.rawBody, signature);
   }
 }

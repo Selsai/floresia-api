@@ -46,10 +46,7 @@ export class FlowersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() dto: UpdateFlowerDto,
-  ) {
+  update(@Param('id') id: string, @Body() dto: UpdateFlowerDto) {
     return this.flowersService.update(id, dto);
   }
 

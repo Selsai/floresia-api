@@ -1,9 +1,19 @@
-import { Injectable, BadRequestException, InternalServerErrorException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  InternalServerErrorException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenAI } from '@google/genai';
 import { PrismaService } from '../prisma/prisma.service';
 import { SendMessageDto } from './dto/send-message.dto';
-import { catalogReply, CUSTOM_BOUQUET_PRODUCT_ID, CatalogProduct, CatalogFlower } from './catalog-replies';
+import {
+  catalogReply,
+  CUSTOM_BOUQUET_PRODUCT_ID,
+  CatalogProduct,
+  CatalogFlower,
+} from './catalog-replies';
 export { CUSTOM_BOUQUET_PRODUCT_ID } from './catalog-replies';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -40,40 +50,52 @@ export class ChatbotService {
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
   ) {
-    this.ai = new GoogleGenAI({ apiKey: this.config.get<string>('GEMINI_API_KEY') });
+    this.ai = new GoogleGenAI({
+      apiKey: this.config.get<string>('GEMINI_API_KEY'),
+    });
   }
 
-  private buildSystemInstruction(products: CatalogProduct[], flowers: CatalogFlower[]): string {
-  const catalog = products
-    .map((p) => `- ${p.name} (${CATEGORY_LABELS[p.category] || p.category}, ${p.price}€) : ${p.description}`)
-    .join('\n');
+  private buildSystemInstruction(
+    products: CatalogProduct[],
+    flowers: CatalogFlower[],
+  ): string {
+    const catalog = products
+      .map(
+        (p) =>
+          `- ${p.name} (${CATEGORY_LABELS[p.category] || p.category}, ${p.price}€) : ${p.description}`,
+      )
+      .join('\n');
 
-  // Regroupe les fleurs par famille avec toutes leurs couleurs disponibles,
-  // pour que le modèle voie la palette complète d'un coup plutôt qu'une
-  // liste plate où il ne retient qu'une seule ligne.
-  const flowersByName = new Map<string, { color: string; price: number }[]>();
-  for (const f of flowers) {
-    if (!flowersByName.has(f.name)) flowersByName.set(f.name, []);
-    flowersByName.get(f.name)!.push({ color: f.color, price: f.price });
-  }
+    // Regroupe les fleurs par famille avec toutes leurs couleurs disponibles,
+    // pour que le modèle voie la palette complète d'un coup plutôt qu'une
+    // liste plate où il ne retient qu'une seule ligne.
+    const flowersByName = new Map<string, { color: string; price: number }[]>();
+    for (const f of flowers) {
+      if (!flowersByName.has(f.name)) flowersByName.set(f.name, []);
+      flowersByName.get(f.name)!.push({ color: f.color, price: f.price });
+    }
 
-  const flowerList = [...flowersByName.entries()]
-    .map(([name, variants]) => {
-      const colors = variants.map((v) => `${v.color} (${v.price}€)`).join(', ');
-      const isSecondary = flowers.find(f => f.name === name)?.isSecondary;
-      return `- ${name}${isSecondary ? ' (complément optionnel)' : ' (fleur principale)'} : ${colors} par tige, sans lot`;
-    })
-    .join('\n') || '(aucune fleur en stock actuellement pour la personnalisation)';
+    const flowerList =
+      [...flowersByName.entries()]
+        .map(([name, variants]) => {
+          const colors = variants
+            .map((v) => `${v.color} (${v.price}€)`)
+            .join(', ');
+          const isSecondary = flowers.find((f) => f.name === name)?.isSecondary;
+          return `- ${name}${isSecondary ? ' (complément optionnel)' : ' (fleur principale)'} : ${colors} par tige, sans lot`;
+        })
+        .join('\n') ||
+      '(aucune fleur en stock actuellement pour la personnalisation)';
 
-  const today = new Date().toLocaleDateString('fr-FR', {
-    timeZone: 'Europe/Paris',
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+    const today = new Date().toLocaleDateString('fr-FR', {
+      timeZone: 'Europe/Paris',
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
 
-  return `Tu es Flora, l'assistante florale virtuelle de Florésia, une boutique de fleurs en ligne qui livre exclusivement à Paris intramuros (75001-75020) et propose le retrait en boutique.
+    return `Tu es Flora, l'assistante florale virtuelle de Florésia, une boutique de fleurs en ligne qui livre exclusivement à Paris intramuros (75001-75020) et propose le retrait en boutique.
 
 ## Contexte fiable fourni par le serveur
 Date du jour : ${today}, fuseau Europe/Paris, Paris / Île-de-France, France, hémisphère nord.
@@ -115,36 +137,55 @@ Commence par « Oui » ou « Non » quand la question s'y prête, puis explique 
 - Si la question n'a aucun rapport avec les fleurs, Florésia ou l'occasion d'offrir un cadeau, redirige poliment et brièvement.
 
 Toujours en français, ton chaleureux et professionnel, jamais robotique.`;
-}
+  }
 
-  private async callGemini(model: string, contents: any[], systemInstruction: string) {
+  private async callGemini(
+    model: string,
+    contents: any[],
+    systemInstruction: string,
+  ) {
     const TIMEOUT_MS = 12_000;
     return this.ai.models.generateContent({
-      model, contents,
+      model,
+      contents,
       config: { systemInstruction, httpOptions: { timeout: TIMEOUT_MS } },
     });
   }
 
-  private async generateWithRetry(contents: any[], systemInstruction: string): Promise<string> {
+  private async generateWithRetry(
+    contents: any[],
+    systemInstruction: string,
+  ): Promise<string> {
     const models = ['gemini-flash-lite-latest', 'gemini-flash-latest'];
-    let lastError: any;
+    let lastError: unknown = new Error('Aucun modèle Gemini disponible.');
 
     for (const model of models) {
       for (let attempt = 1; attempt <= 2; attempt++) {
         try {
-          const response = await this.callGemini(model, contents, systemInstruction);
+          const response = await this.callGemini(
+            model,
+            contents,
+            systemInstruction,
+          );
           if (!response.text?.trim()) throw new Error('EMPTY_RESPONSE');
           return response.text;
-        } catch (err: any) {
+        } catch (err: unknown) {
           lastError = err;
-          if (err?.status === 429) break; // Try the other model without repeating an exhausted quota.
+          const details =
+            typeof err === 'object' && err !== null
+              ? (err as { status?: unknown; message?: unknown })
+              : {};
+          const status = Number(details.status);
+          const message =
+            typeof details.message === 'string' ? details.message : '';
+          if (status === 429) break; // Try the other model without repeating an exhausted quota.
 
           const isRetryable =
-            err?.status === 503 ||
-            err?.message === 'EMPTY_RESPONSE' ||
-            err?.message === 'TIMEOUT' ||
-            /timeout|timed out|aborted/i.test(err?.message || '') ||
-            err?.message?.includes('fetch failed');
+            status === 503 ||
+            message === 'EMPTY_RESPONSE' ||
+            message === 'TIMEOUT' ||
+            /timeout|timed out|aborted/i.test(message) ||
+            message.includes('fetch failed');
 
           if (!isRetryable) {
             throw err;
@@ -172,7 +213,13 @@ Toujours en français, ton chaleureux et professionnel, jamais robotique.`;
       }),
       this.prisma.flower.findMany({
         where: { stock: { gt: 0 } },
-        select: { name: true, color: true, price: true, stock: true, isSecondary: true },
+        select: {
+          name: true,
+          color: true,
+          price: true,
+          stock: true,
+          isSecondary: true,
+        },
       }),
     ]);
     const factualReply = catalogReply(dto.message, products, flowers);
@@ -193,10 +240,12 @@ Toujours en français, ton chaleureux et professionnel, jamais robotique.`;
     } catch (err) {
       console.error('Erreur Gemini :', err);
       if ((err as { status?: number })?.status === 429) {
-        throw new ServiceUnavailableException('Flora a atteint sa limite de demandes. Merci de réessayer plus tard.');
+        throw new ServiceUnavailableException(
+          'Flora a atteint sa limite de demandes. Merci de réessayer plus tard.',
+        );
       }
       throw new InternalServerErrorException(
-        "Le chatbot est momentanément indisponible, réessayez dans un instant.",
+        'Le chatbot est momentanément indisponible, réessayez dans un instant.',
       );
     }
   }

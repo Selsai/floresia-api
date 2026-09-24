@@ -1,5 +1,13 @@
-import { IsArray, IsIn, IsNotEmpty, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import {
+  IsArray,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
+import { Transform, Type, type TransformFnParams } from 'class-transformer';
 
 class HistoryItemDto {
   @IsIn(['user', 'model'])
@@ -11,7 +19,9 @@ class HistoryItemDto {
 }
 
 export class SendMessageDto {
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: TransformFnParams): unknown =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @IsNotEmpty({ message: 'Le message ne peut pas être vide.' })
   @MaxLength(500)

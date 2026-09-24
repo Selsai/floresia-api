@@ -15,7 +15,10 @@ import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type AuthenticatedUser,
+} from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Addresses')
 @ApiBearerAuth()
@@ -25,13 +28,13 @@ export class AddressesController {
   constructor(private readonly addressesService: AddressesService) {}
 
   @Get()
-  findAll(@CurrentUser() user: any) {
+  findAll(@CurrentUser() user: AuthenticatedUser) {
     return this.addressesService.findAll(user.userId);
   }
 
   @Post()
   create(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateAddressDto,
   ) {
     return this.addressesService.create(user.userId, dto);
@@ -39,7 +42,7 @@ export class AddressesController {
 
   @Patch(':id')
   update(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() dto: UpdateAddressDto,
   ) {
@@ -47,10 +50,7 @@ export class AddressesController {
   }
 
   @Delete(':id')
-  remove(
-    @CurrentUser() user: any,
-    @Param('id') id: string,
-  ) {
+  remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.addressesService.remove(user.userId, id);
   }
 }

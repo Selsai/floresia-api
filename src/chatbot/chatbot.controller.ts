@@ -4,12 +4,10 @@ import type { Request } from 'express';
 import { ChatbotService } from './chatbot.service';
 import { SendMessageDto } from './dto/send-message.dto';
 
-
 @ApiTags('Chatbot')
 @Controller('chatbot')
 export class ChatbotController {
   constructor(private readonly chatbotService: ChatbotService) {}
-
 
   @Post('message')
   sendMessage(@Body() dto: SendMessageDto, @Req() req: Request) {

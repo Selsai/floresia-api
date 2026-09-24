@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTestimonialDto } from './dto/create-testimonial.dto';
 import { UpdateTestimonialDto } from './dto/update-testimonial.dto';
@@ -17,7 +21,9 @@ export class TestimonialsService {
   }
 
   async findOne(id: string) {
-    const testimonial = await this.prisma.testimonial.findUnique({ where: { id } });
+    const testimonial = await this.prisma.testimonial.findUnique({
+      where: { id },
+    });
     if (!testimonial) throw new NotFoundException('Témoignage introuvable');
     return testimonial;
   }
@@ -31,7 +37,9 @@ export class TestimonialsService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
     if (!user.isEmailVerified) {
-      throw new ForbiddenException('Veuillez vérifier votre adresse email avant de pouvoir laisser un avis.');
+      throw new ForbiddenException(
+        'Veuillez vérifier votre adresse email avant de pouvoir laisser un avis.',
+      );
     }
 
     return this.prisma.testimonial.create({
@@ -49,7 +57,9 @@ export class TestimonialsService {
     const testimonial = await this.findOne(id);
 
     if (role !== 'ADMIN' && testimonial.authorId !== userId) {
-      throw new ForbiddenException('Vous ne pouvez supprimer que votre propre avis.');
+      throw new ForbiddenException(
+        'Vous ne pouvez supprimer que votre propre avis.',
+      );
     }
 
     await this.prisma.testimonial.delete({ where: { id } });

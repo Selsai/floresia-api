@@ -38,7 +38,8 @@ export class AddressesService {
     });
 
     if (!address) throw new NotFoundException('Adresse introuvable.');
-    if (address.userId !== userId) throw new ForbiddenException('Accès refusé.');
+    if (address.userId !== userId)
+      throw new ForbiddenException('Accès refusé.');
 
     if (dto.isDefault) {
       await this.prisma.address.updateMany({
@@ -59,15 +60,20 @@ export class AddressesService {
     });
 
     if (!address) throw new NotFoundException('Adresse introuvable.');
-    if (address.userId !== userId) throw new ForbiddenException('Accès refusé.');
+    if (address.userId !== userId)
+      throw new ForbiddenException('Accès refusé.');
 
     try {
       await this.prisma.address.delete({ where: { id: addressId } });
       return { message: 'Adresse supprimée avec succès.' };
-    } catch (err: any) {
-      if (err?.code === 'P2003' || err?.code === 'P2014') {
+    } catch (err: unknown) {
+      const code =
+        typeof err === 'object' && err !== null && 'code' in err
+          ? String(err.code)
+          : undefined;
+      if (code === 'P2003' || code === 'P2014') {
         throw new BadRequestException(
-          'Cette adresse est liée à une ou plusieurs commandes passées et ne peut pas être supprimée.'
+          'Cette adresse est liée à une ou plusieurs commandes passées et ne peut pas être supprimée.',
         );
       }
       throw err;

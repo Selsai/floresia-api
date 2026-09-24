@@ -2,11 +2,24 @@ import { Injectable } from '@nestjs/common';
 import { Resend } from 'resend';
 
 const escapeHtml = (value: string) =>
-  value.replace(/[&<>"']/g, (character) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
-  })[character] || character);
+  value.replace(
+    /[&<>"']/g,
+    (character) =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;',
+      })[character] || character,
+  );
 
-const mailLayout = (title: string, intro: string, content: string, footer: string) => `
+const mailLayout = (
+  title: string,
+  intro: string,
+  content: string,
+  footer: string,
+) => `
   <!doctype html>
   <html lang="fr">
     <body style="margin:0; padding:0; background:#fbf7f4; color:#3d2530; font-family:Arial,Helvetica,sans-serif;">

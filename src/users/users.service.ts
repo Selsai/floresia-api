@@ -98,42 +98,42 @@ export class UsersService {
     });
   }
 
-// ==========================
-// Supprimer
-// ==========================
+  // ==========================
+  // Supprimer
+  // ==========================
 
-async remove(id: string) {
-  const user = await this.prisma.user.findUnique({
-    where: {
-      id,
-    },
-  });
-
-  if (!user) {
-    throw new NotFoundException('Utilisateur introuvable');
-  }
-
-  try {
-    await this.prisma.user.delete({
+  async remove(id: string) {
+    const user = await this.prisma.user.findUnique({
       where: {
         id,
       },
     });
 
-    return {
-      message: 'Utilisateur supprimé avec succès.',
-    };
-  } catch (error) {
-        if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2003'
-    ) {
-      throw new BadRequestException(
-        "Impossible de supprimer cet utilisateur car il possède encore des données associées (articles, commentaires ou commandes).",
-      );
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable');
     }
 
-    throw error;
+    try {
+      await this.prisma.user.delete({
+        where: {
+          id,
+        },
+      });
+
+      return {
+        message: 'Utilisateur supprimé avec succès.',
+      };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2003'
+      ) {
+        throw new BadRequestException(
+          'Impossible de supprimer cet utilisateur car il possède encore des données associées (articles, commentaires ou commandes).',
+        );
+      }
+
+      throw error;
+    }
   }
-}
 }

@@ -222,15 +222,11 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new BadRequestException(
-        'Aucun compte associé à cet email.',
-      );
+      throw new BadRequestException('Aucun compte associé à cet email.');
     }
 
     if (user.isEmailVerified) {
-      throw new BadRequestException(
-        'Cet email est déjà vérifié.',
-      );
+      throw new BadRequestException('Cet email est déjà vérifié.');
     }
 
     const code = randomInt(100000, 999999).toString();
@@ -244,10 +240,7 @@ export class AuthService {
       },
     });
 
-    await this.mailService.sendVerificationCode(
-      normalizedEmail,
-      code,
-    );
+    await this.mailService.sendVerificationCode(normalizedEmail, code);
 
     return { message: 'Code envoyé.' };
   }
@@ -306,8 +299,7 @@ export class AuthService {
     // (anti-énumération de comptes)
     if (!user) {
       return {
-        message:
-          'Si un compte existe avec cet email, un lien a été envoyé.',
+        message: 'Si un compte existe avec cet email, un lien a été envoyé.',
       };
     }
 
@@ -326,14 +318,10 @@ export class AuthService {
     // http://localhost:5173/floresia-app
     const resetLink = `${process.env.FRONTEND_URL}/reinitialiser-mot-de-passe?token=${token}`;
 
-    await this.mailService.sendPasswordResetLink(
-      normalizedEmail,
-      resetLink,
-    );
+    await this.mailService.sendPasswordResetLink(normalizedEmail, resetLink);
 
     return {
-      message:
-        'Si un compte existe avec cet email, un lien a été envoyé.',
+      message: 'Si un compte existe avec cet email, un lien a été envoyé.',
     };
   }
 
@@ -346,9 +334,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new BadRequestException(
-        'Lien invalide ou expiré.',
-      );
+      throw new BadRequestException('Lien invalide ou expiré.');
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 12);

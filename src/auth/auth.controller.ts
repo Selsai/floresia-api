@@ -1,5 +1,10 @@
 import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -12,7 +17,10 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendCodeDto } from './dto/resend-code.dto';
 
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { CurrentUser } from './decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type AuthenticatedUser,
+} from './decorators/current-user.decorator';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -22,14 +30,20 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'Créer un nouveau compte utilisateur' })
   @ApiResponse({ status: 201, description: 'Utilisateur créé avec succès.' })
-  @ApiResponse({ status: 400, description: 'Données invalides ou email déjà utilisé.' })
+  @ApiResponse({
+    status: 400,
+    description: 'Données invalides ou email déjà utilisé.',
+  })
   register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 
   @Post('login')
   @ApiOperation({ summary: 'Connexion utilisateur et génération du JWT' })
-  @ApiResponse({ status: 200, description: 'Connexion réussie avec retour du token JWT.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Connexion réussie avec retour du token JWT.',
+  })
   @ApiResponse({ status: 401, description: 'Email ou mot de passe incorrect.' })
   login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
@@ -38,24 +52,38 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Récupérer les informations de l’utilisateur connecté' })
-  getProfile(@CurrentUser() user: { userId: string; email: string; role: string }) {
+  @ApiOperation({
+    summary: 'Récupérer les informations de l’utilisateur connecté',
+  })
+  getProfile(
+    @CurrentUser() user: { userId: string; email: string; role: string },
+  ) {
     return this.authService.getProfile(user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('me')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Mettre à jour le profil de l’utilisateur connecté' })
-  updateProfile(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
+  @ApiOperation({
+    summary: 'Mettre à jour le profil de l’utilisateur connecté',
+  })
+  updateProfile(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateProfileDto,
+  ) {
     return this.authService.updateProfile(user.userId, dto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('change-password')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Changer le mot de passe de l’utilisateur connecté' })
-  changePassword(@CurrentUser() user: any, @Body() dto: ChangePasswordDto) {
+  @ApiOperation({
+    summary: 'Changer le mot de passe de l’utilisateur connecté',
+  })
+  changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ChangePasswordDto,
+  ) {
     return this.authService.changePassword(user.userId, dto);
   }
 
@@ -72,7 +100,9 @@ export class AuthController {
   }
 
   @Post('forgot-password')
-  @ApiOperation({ summary: 'Demander un lien de réinitialisation de mot de passe' })
+  @ApiOperation({
+    summary: 'Demander un lien de réinitialisation de mot de passe',
+  })
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto.email);
   }

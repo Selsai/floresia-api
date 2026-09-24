@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { ArticlesService } from './articles.service';
@@ -6,7 +14,10 @@ import { CreateArticleDto } from './dto/create-article.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles/roles.guard';
 import { Roles } from '../auth/roles/roles.decorator';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type AuthenticatedUser,
+} from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Articles')
 @Controller('articles')
@@ -27,7 +38,10 @@ export class ArticlesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Post()
-  create(@CurrentUser() user: any, @Body() dto: CreateArticleDto) {
+  create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateArticleDto,
+  ) {
     return this.articlesService.create(user.userId, dto);
   }
 

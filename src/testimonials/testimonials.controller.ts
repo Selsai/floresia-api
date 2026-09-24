@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { TestimonialsService } from './testimonials.service';
@@ -8,7 +17,10 @@ import { SubmitTestimonialDto } from './dto/submit-testimonial.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/roles/roles.decorator';
 import { RolesGuard } from '../auth/roles/roles.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type AuthenticatedUser,
+} from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Testimonials')
 @Controller('testimonials')
@@ -26,7 +38,10 @@ export class TestimonialsController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('mine')
-  submit(@CurrentUser() user: any, @Body() dto: SubmitTestimonialDto) {
+  submit(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: SubmitTestimonialDto,
+  ) {
     return this.testimonialsService.submit(user.userId, dto);
   }
 
@@ -51,7 +66,7 @@ export class TestimonialsController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: any) {
+  remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.testimonialsService.remove(id, user.userId, user.role);
   }
 }
