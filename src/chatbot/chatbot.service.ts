@@ -30,6 +30,7 @@ const RATE_LIMIT = 8; // messages par minute par IP
 const rateBuckets = new Map<string, { count: number; resetAt: number }>();
 
 function isRateLimited(ip: string): boolean {
+  // Limite les messages par adresse IP.
   const now = Date.now();
   const bucket = rateBuckets.get(ip);
 
@@ -200,6 +201,7 @@ Toujours en français, ton chaleureux et professionnel, jamais robotique.`;
   }
 
   async sendMessage(dto: SendMessageDto, ip: string) {
+    // Privilégie le catalogue avant l’IA externe.
     if (isRateLimited(ip)) {
       throw new BadRequestException(
         'Trop de messages envoyés en peu de temps, merci de patienter une minute.',

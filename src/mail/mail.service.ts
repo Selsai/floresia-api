@@ -52,6 +52,7 @@ export class MailService {
   private from = process.env.MAIL_FROM || 'no-reply@floresia.fr';
 
   async sendVerificationCode(to: string, code: string) {
+    // Envoie le code dans le modèle Florésia.
     await this.resend.emails.send({
       from: `Florésia <${this.from}>`,
       to,
@@ -67,6 +68,7 @@ export class MailService {
   }
 
   async sendPasswordResetLink(to: string, resetUrl: string) {
+    // Envoie le lien de réinitialisation sécurisé.
     await this.resend.emails.send({
       from: `Florésia <${this.from}>`,
       to,

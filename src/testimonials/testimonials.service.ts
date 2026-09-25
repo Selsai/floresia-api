@@ -34,6 +34,7 @@ export class TestimonialsService {
   }
 
   async submit(userId: string, dto: SubmitTestimonialDto) {
+    // Associe l’avis au compte vérifié.
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
     if (!user.isEmailVerified) {
@@ -54,6 +55,7 @@ export class TestimonialsService {
   }
 
   async remove(id: string, userId: string, role: string) {
+    // Autorise l’auteur ou un administrateur.
     const testimonial = await this.findOne(id);
 
     if (role !== 'ADMIN' && testimonial.authorId !== userId) {

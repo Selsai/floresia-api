@@ -26,6 +26,7 @@ export class PaymentService {
   // Créer une session de paiement Stripe
   // ==========================
   async createCheckoutSession(orderId: string, userId: string) {
+    // Recalcule et contrôle le montant côté serveur.
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: {
@@ -110,6 +111,7 @@ export class PaymentService {
   // Traiter le webhook Stripe
   // ==========================
   async handleWebhookEvent(rawBody: Buffer, signature: string) {
+    // Valide la signature avant de marquer la commande payée.
     const webhookSecret = this.configService.get<string>(
       'STRIPE_WEBHOOK_SECRET',
     );

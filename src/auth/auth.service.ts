@@ -24,6 +24,7 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto) {
+    // Crée un compte et chiffre son mot de passe.
     const email = registerDto.email.toLowerCase().trim();
 
     const existingUser = await this.prisma.user.findUnique({
@@ -72,6 +73,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
+    // Vérifie les identifiants et signe le JWT.
     const email = loginDto.email.toLowerCase().trim();
 
     const user = await this.prisma.user.findUnique({
@@ -215,6 +217,7 @@ export class AuthService {
   // ==========================
 
   async sendVerificationCode(email: string) {
+    // Renouvelle le code de validation email.
     const normalizedEmail = email.toLowerCase().trim();
 
     const user = await this.prisma.user.findUnique({
@@ -246,6 +249,7 @@ export class AuthService {
   }
 
   async verifyEmail(dto: VerifyEmailDto) {
+    // Valide le code encore actif.
     const email = dto.email.toLowerCase().trim();
 
     const user = await this.prisma.user.findUnique({
@@ -289,6 +293,7 @@ export class AuthService {
   // ==========================
 
   async forgotPassword(email: string) {
+    // Crée un lien temporaire de réinitialisation.
     const normalizedEmail = email.toLowerCase().trim();
 
     const user = await this.prisma.user.findUnique({
@@ -326,6 +331,7 @@ export class AuthService {
   }
 
   async resetPassword(token: string, newPassword: string) {
+    // Remplace le mot de passe puis invalide le lien.
     const user = await this.prisma.user.findFirst({
       where: {
         resetToken: token,

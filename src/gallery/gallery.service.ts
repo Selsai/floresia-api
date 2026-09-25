@@ -34,6 +34,7 @@ export class GalleryService {
   }
 
   async submit(userId: string, dto: SubmitGalleryPhotoDto, imageUrl: string) {
+    // Réserve la publication aux emails vérifiés.
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
     if (!user.isEmailVerified) {
@@ -53,6 +54,7 @@ export class GalleryService {
   }
 
   async remove(id: string, userId: string, role: string) {
+    // Autorise le propriétaire ou un administrateur.
     const photo = await this.findOne(id);
 
     if (role !== 'ADMIN' && photo.authorId !== userId) {

@@ -54,6 +54,7 @@ export class CommentsService {
   }
 
   async create(authorId: string, dto: CreateCommentDto, imageUrl?: string) {
+    // Contrôle l’auteur, l’article et la réponse ciblée.
     const author = await this.prisma.user.findUnique({
       where: { id: authorId },
     });
@@ -104,6 +105,7 @@ export class CommentsService {
   }
 
   async remove(id: string, userId: string, role: string) {
+    // Autorise l’auteur ou un administrateur.
     const comment = await this.prisma.comment.findUnique({
       where: { id },
     });

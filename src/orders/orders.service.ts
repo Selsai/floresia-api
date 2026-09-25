@@ -71,6 +71,7 @@ export class OrdersService {
   // ==========================
 
   async create(userId: string, dto: CreateOrderDto) {
+    // Valide le panier puis calcule le total officiel.
     const address = await this.prisma.address.findUnique({
       where: { id: dto.addressId },
     });
