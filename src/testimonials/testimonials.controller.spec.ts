@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import request from 'supertest';
 import { TestimonialsController } from './testimonials.controller';
 import { TestimonialsService } from './testimonials.service';

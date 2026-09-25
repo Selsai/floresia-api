@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import request from 'supertest';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';

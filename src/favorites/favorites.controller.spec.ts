@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import request from 'supertest';
 import { FavoritesController } from './favorites.controller';
 import { FavoritesService } from './favorites.service';

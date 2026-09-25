@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import { Test } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';

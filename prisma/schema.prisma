@@ -1,3 +1,4 @@
+// Rôle : Configuration ou point d’entrée de l’API Florésia.
 generator client {
   provider = "prisma-client-js"
 }

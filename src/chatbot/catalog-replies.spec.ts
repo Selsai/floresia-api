@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import { catalogReply, CatalogProduct, CatalogFlower } from './catalog-replies';
 
 const products: CatalogProduct[] = [

@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import request from 'supertest';
 import { CommentsController } from './comments.controller';
 import { CommentsService } from './comments.service';

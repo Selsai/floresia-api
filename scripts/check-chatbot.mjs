@@ -1,3 +1,4 @@
+// Rôle : Script de maintenance des données.
 // test-chatbot.mjs
 const API_URL = 'http://localhost:3000';
 

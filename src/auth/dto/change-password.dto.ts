@@ -1,3 +1,4 @@
+// Rôle : Validation des données reçues par l’API.
 import { IsString, Matches, MinLength } from 'class-validator';
 
 export class ChangePasswordDto {

@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import { ValidationPipe } from '@nestjs/common';
 import { UpdateFlowerDto } from './update-flower.dto';
 

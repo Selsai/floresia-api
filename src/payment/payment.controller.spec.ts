@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import request from 'supertest';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';

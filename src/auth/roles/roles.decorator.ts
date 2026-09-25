@@ -1,3 +1,4 @@
+// Rôle : Contrôle des droits d’accès.
 import { SetMetadata } from '@nestjs/common';
 
 export const ROLES_KEY = 'roles';

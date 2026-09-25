@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import request from 'supertest';
 import { FlowersController } from './flowers.controller';
 import { FlowersService } from './flowers.service';

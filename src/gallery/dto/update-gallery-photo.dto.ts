@@ -1,3 +1,4 @@
+// Rôle : Validation des données reçues par l’API.
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateGalleryPhotoDto } from './create-gallery-photo.dto';
 

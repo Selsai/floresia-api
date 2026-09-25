@@ -1,3 +1,4 @@
+// Rôle : Validation des données reçues par l’API.
 import { IsEnum } from 'class-validator';
 import { OrderStatus } from '@prisma/client';
 

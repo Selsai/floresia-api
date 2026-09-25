@@ -1,3 +1,4 @@
+// Rôle : Validation des données reçues par l’API.
 import { IsInt, IsOptional, IsString, IsUrl, Max, Min } from 'class-validator';
 
 export class CreateTestimonialDto {

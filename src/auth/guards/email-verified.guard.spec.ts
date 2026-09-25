@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { EmailVerifiedGuard } from './email-verified.guard';
 import { PrismaService } from '../../prisma/prisma.service';

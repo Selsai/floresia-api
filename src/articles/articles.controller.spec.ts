@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import request from 'supertest';
 import { ArticlesController } from './articles.controller';
 import { ArticlesService } from './articles.service';

@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import { ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
 describe('JwtStrategy : configuration et identité', () => {

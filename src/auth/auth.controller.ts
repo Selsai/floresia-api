@@ -1,3 +1,4 @@
+// Rôle : Routes HTTP de ce domaine métier.
 import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,

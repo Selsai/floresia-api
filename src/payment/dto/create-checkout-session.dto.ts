@@ -1,3 +1,4 @@
+// Rôle : Validation des données reçues par l’API.
 import { IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 

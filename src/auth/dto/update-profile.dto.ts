@@ -1,3 +1,4 @@
+// Rôle : Validation des données reçues par l’API.
 import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UpdateProfileDto {

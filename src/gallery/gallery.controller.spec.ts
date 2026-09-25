@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import request from 'supertest';
 import { GalleryController } from './gallery.controller';
 import { GalleryService } from './gallery.service';

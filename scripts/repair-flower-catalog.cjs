@@ -34,3 +34,4 @@ const secondaryNames = ['Eucalyptus', 'Gypsophile', 'Fougère', 'Ruscus', 'Astil
   console.error('Réparation interrompue :', error.code || error.message);
   process.exitCode = 1;
 }).finally(() => prisma.$disconnect());
+// Rôle : Réparation ponctuelle du catalogue de fleurs.

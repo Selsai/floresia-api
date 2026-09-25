@@ -1,3 +1,4 @@
+// Rôle : Configuration ou point d’entrée de l’API Florésia.
 // @ts-check
 import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';

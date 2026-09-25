@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { GalleryService } from './gallery.service';
 import { PrismaService } from '../prisma/prisma.service';

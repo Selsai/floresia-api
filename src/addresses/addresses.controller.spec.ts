@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import request from 'supertest';
 import { AddressesController } from './addresses.controller';
 import { AddressesService } from './addresses.service';

@@ -1,3 +1,4 @@
+// Rôle : Configuration ou point d’entrée de l’API Florésia.
 export const CUSTOM_BOUQUET_PRODUCT_ID = 'cmtxj1mhg000c99uhklj59h39';
 
 export type CatalogProduct = {

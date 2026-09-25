@@ -1,3 +1,4 @@
+// Rôle : Validation des données reçues par l’API.
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,

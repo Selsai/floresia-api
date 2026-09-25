@@ -1,3 +1,4 @@
+// Rôle : Assemblage NestJS de ce domaine métier.
 import { Module } from '@nestjs/common';
 import { AddressesController } from './addresses.controller';
 import { AddressesService } from './addresses.service';

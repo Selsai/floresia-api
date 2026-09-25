@@ -1,3 +1,4 @@
+// Rôle : Routes HTTP de ce domaine métier.
 import {
   Controller,
   Get,

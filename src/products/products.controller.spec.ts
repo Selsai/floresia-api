@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import request from 'supertest';
 import { ProductsController } from './products.controller';
 import { ProductsService } from './products.service';

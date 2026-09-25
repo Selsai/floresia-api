@@ -1,3 +1,4 @@
+// Rôle : Vérification ponctuelle du catalogue utilisé par Flora.
 // Read-only regression checks against the real database; no Gemini quota used.
 require('reflect-metadata');
 require('ts-node').register({ transpileOnly: true });

@@ -1,3 +1,4 @@
+// Rôle : Assemblage NestJS de ce domaine métier.
 import { Module } from '@nestjs/common';
 import { JwtModule, type JwtModuleOptions } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';

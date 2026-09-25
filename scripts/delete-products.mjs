@@ -1,3 +1,4 @@
+// Rôle : Script de maintenance des données.
 // delete-products.mjs
 const API_URL = 'http://localhost:3000';
 const TOKEN = process.env.ADMIN_TOKEN;

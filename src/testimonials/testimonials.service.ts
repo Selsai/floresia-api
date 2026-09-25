@@ -1,3 +1,4 @@
+// Rôle : Règles métier et accès aux données.
 import {
   ForbiddenException,
   Injectable,

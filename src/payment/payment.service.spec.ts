@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import {
   BadRequestException,
   ForbiddenException,

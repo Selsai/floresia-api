@@ -1,3 +1,4 @@
+// Rôle : Accès simplifié aux données de requête.
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import type { Request } from 'express';
 

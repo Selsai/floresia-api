@@ -1,3 +1,4 @@
+// Rôle : Contrôle des droits d’accès.
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 
 import { AuthGuard } from '@nestjs/passport';

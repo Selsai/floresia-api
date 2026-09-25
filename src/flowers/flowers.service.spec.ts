@@ -1,3 +1,4 @@
+// Rôle : Tests automatisés de cette fonctionnalité.
 import { NotFoundException } from '@nestjs/common';
 import { FlowersService } from './flowers.service';
 import { PrismaService } from '../prisma/prisma.service';

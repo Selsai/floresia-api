@@ -1,3 +1,4 @@
+// Rôle : Règles métier et accès aux données.
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';

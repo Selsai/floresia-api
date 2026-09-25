@@ -1,3 +1,4 @@
+// Rôle : Validation des données reçues par l’API.
 import { IsOptional, IsString } from 'class-validator';
 
 export class CreateCommentDto {

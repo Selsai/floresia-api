@@ -1,3 +1,4 @@
+// Rôle : Configuration ou point d’entrée de l’API Florésia.
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';

@@ -81,3 +81,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+// Rôle : Correction contrôlée des chemins d’images en production.

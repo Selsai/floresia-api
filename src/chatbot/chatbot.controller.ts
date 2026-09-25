@@ -1,3 +1,4 @@
+// Rôle : Routes HTTP de ce domaine métier.
 import { Body, Controller, Post, Req } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';

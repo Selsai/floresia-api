@@ -1,3 +1,4 @@
+// Rôle : Contrôle des droits d’accès.
 import {
   CanActivate,
   ExecutionContext,

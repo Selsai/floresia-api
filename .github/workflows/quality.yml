@@ -1,3 +1,4 @@
+# Rôle : Contrôles automatiques de qualité de l’API.
 name: Vérifications API
 on:
   pull_request:
