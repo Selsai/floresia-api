@@ -167,3 +167,51 @@ export function catalogReply(
   }
   return undefined;
 }
+
+// Réponse de continuité lorsque Gemini est indisponible. Elle couvre les
+// demandes florales courantes sans inventer une information commerciale.
+export function offlineFloralReply(
+  message: string,
+  products: CatalogProduct[],
+  flowers: CatalogFlower[],
+): string {
+  const question = normalize(message);
+
+  if (/\b(commande|livraison|suivi|remboursement|retour)\b/.test(question)) {
+    return `Je n'ai pas accès à vos informations personnelles ni au suivi d'une commande. Consultez « Mes commandes » depuis votre compte ou utilisez la page Contact pour obtenir une aide adaptée.`;
+  }
+  if (/\b(horaire|adresse|telephone|contacter|contact)\b/.test(question)) {
+    return `Les informations administratives à jour sont disponibles sur la page Contact de Florésia. Je préfère vous y orienter plutôt que de vous donner un horaire ou une adresse que je ne peux pas vérifier.`;
+  }
+  if (/\b(entretien|entretenir|conserver|garder|durer|faner|eau|vase)\b/.test(question)) {
+    return `Pour prolonger la tenue d'un bouquet, utilisez un vase propre, recoupez les tiges en biais et retirez les feuilles qui seraient sous l'eau. Renouvelez l'eau tous les deux jours et placez les fleurs loin du soleil direct, des radiateurs, des courants d'air et des fruits mûrs.`;
+  }
+  if (/\b(chien|chat|animal|toxique|toxicite|ingestion)\b/.test(question)) {
+    return `Certaines fleurs peuvent être toxiques pour les animaux, mais le risque dépend de l'espèce exacte. Éloignez le bouquet de l'animal et, en cas d'ingestion ou de symptôme, contactez rapidement un vétérinaire ou un centre antipoison vétérinaire avec le nom précis de la plante.`;
+  }
+  if (/\b(signification|symbol|couleur)\b/.test(question)) {
+    return `La signification dépend du contexte : le rouge évoque souvent l'amour, le rose la tendresse, le blanc la pureté ou l'hommage, et le jaune la joie ou l'amitié. Dites-moi la couleur, la fleur et l'occasion concernées pour que je vous conseille plus précisément.`;
+  }
+  if (/\b(mariage|anniversaire|naissance|deuil|remerciement|amour|saint-valentin)\b/.test(question)) {
+    const category = question.includes('mariage') ? 'MARIAGE'
+      : question.includes('anniversaire') ? 'ANNIVERSAIRE'
+        : question.includes('naissance') ? 'NAISSANCE'
+          : question.includes('deuil') ? 'DEUIL'
+            : question.includes('saint-valentin') || question.includes('amour') ? 'SAINT_VALENTIN' : 'AUTRE';
+    const suggestions = products.filter((p) => p.category === category).slice(0, 3);
+    if (suggestions.length) {
+      return `Parmi les bouquets actuellement présentés par Florésia, vous pouvez regarder : ${suggestions.map((p) => `« ${p.name} » à ${euros(p.price)}`).join(', ')}. Vérifiez leur fiche pour choisir selon les couleurs et le message que vous souhaitez transmettre.`;
+    }
+    return `Pour cette occasion, privilégiez une composition adaptée au message que vous souhaitez transmettre. L'atelier « Personnalisation » vous permet de choisir les fleurs, les couleurs et le ruban parmi les éléments disponibles.`;
+  }
+  if (/\b(saison|printemps|ete|automne|hiver|mois)\b/.test(question)) {
+    return `La saisonnalité varie selon la région, la culture et l'approvisionnement. Pour un choix responsable, privilégiez les fleurs disponibles dans la boutique au moment de votre commande et demandez confirmation sur la page Contact si l'origine ou la saison est déterminante.`;
+  }
+  if (/\b(personnal|composer|composition|bouquet)\b/.test(question)) {
+    const available = [...new Set(flowers.filter((f) => f.stock > 0).map((f) => f.name))].slice(0, 4);
+    return available.length
+      ? `Vous pouvez utiliser l'atelier « Personnalisation » et composer votre bouquet à partir des familles actuellement disponibles, par exemple ${available.join(', ')}. Choisissez d'abord l'occasion, puis les fleurs ; les compléments restent optionnels avant le ruban et le message.`
+      : `Vous pouvez utiliser l'atelier « Personnalisation » : choisissez l'occasion, les fleurs, les compléments éventuels, le ruban et le message avant l'ajout au panier.`;
+  }
+  return `Je rencontre un ralentissement du service de réponse, mais je peux toujours vous guider sur le choix d'un bouquet, sa personnalisation, l'entretien des fleurs ou leur signification. Reformulez votre question en précisant la fleur, l'occasion ou le budget concerné.`;
+}

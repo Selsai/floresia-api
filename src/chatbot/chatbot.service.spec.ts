@@ -143,7 +143,7 @@ describe('ChatbotService : contexte et erreurs', () => {
     );
   });
 
-  it('ne relance pas un refus de localisation et conserve une erreur publique sans détail technique', async () => {
+  it('répond localement si Gemini refuse la requête', async () => {
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
     generateContent.mockRejectedValue({
       status: 400,
@@ -151,7 +151,9 @@ describe('ChatbotService : contexte et erreurs', () => {
     });
     await expect(
       service.sendMessage({ message: 'Bonjour' }, 'location-test'),
-    ).rejects.toThrow('Le chatbot est momentanément indisponible');
+    ).resolves.toEqual({
+      reply: expect.stringContaining('ralentissement du service'),
+    });
     expect(generateContent).toHaveBeenCalledTimes(1);
   });
 
@@ -168,15 +170,20 @@ describe('ChatbotService : contexte et erreurs', () => {
     ).toEqual(['gemini-flash-latest', 'gemini-flash-lite-latest']);
   });
 
-  it('explique l’indisponibilité lorsque les deux modèles ont épuisé leur quota', async () => {
+  it('fournit une réponse locale lorsque les deux modèles ont épuisé leur quota', async () => {
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
     generateContent.mockRejectedValue({
       status: 429,
       message: 'Quota exceeded',
     });
     await expect(
-      service.sendMessage({ message: 'Bonjour' }, 'all-quotas'),
-    ).rejects.toThrow('Flora a atteint sa limite de demandes');
+      service.sendMessage(
+        { message: 'Comment conserver un bouquet ?' },
+        'all-quotas',
+      ),
+    ).resolves.toEqual({
+      reply: expect.stringContaining("Renouvelez l'eau"),
+    });
     expect(generateContent).toHaveBeenCalledTimes(2);
   });
 });

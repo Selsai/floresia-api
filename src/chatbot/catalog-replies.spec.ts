@@ -1,5 +1,10 @@
 // Rôle : Tests automatisés de cette fonctionnalité.
-import { catalogReply, CatalogProduct, CatalogFlower } from './catalog-replies';
+import {
+  catalogReply,
+  CatalogProduct,
+  CatalogFlower,
+  offlineFloralReply,
+} from './catalog-replies';
 
 const products: CatalogProduct[] = [
   {
@@ -174,5 +179,23 @@ describe('Réponses factuelles de Flora', () => {
     );
     expect(reply).toContain(products[0].name);
     expect(reply).not.toContain(products[2].name);
+  });
+});
+
+describe('Continuité de Flora sans service externe', () => {
+  it.each([
+    ['Comment conserver un bouquet ?', "Renouvelez l'eau"],
+    ['Que signifie la couleur rouge ?', "l'amour"],
+    ['Mon chat a mangé une fleur', 'vétérinaire'],
+    ['Comment suivre ma commande ?', 'Mes commandes'],
+    ['Comment personnaliser un bouquet ?', 'Personnalisation'],
+  ])('répond à une demande courante : %s', (message, expected) => {
+    expect(offlineFloralReply(message, products, flowers)).toContain(expected);
+  });
+
+  it('retourne toujours une réponse pour une question non reconnue', () => {
+    expect(offlineFloralReply('Peux-tu préciser ?', products, flowers)).toMatch(
+      /ralentissement du service/,
+    );
   });
 });

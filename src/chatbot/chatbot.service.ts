@@ -2,8 +2,6 @@
 import {
   Injectable,
   BadRequestException,
-  InternalServerErrorException,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenAI } from '@google/genai';
@@ -14,6 +12,7 @@ import {
   CUSTOM_BOUQUET_PRODUCT_ID,
   CatalogProduct,
   CatalogFlower,
+  offlineFloralReply,
 } from './catalog-replies';
 export { CUSTOM_BOUQUET_PRODUCT_ID } from './catalog-replies';
 
@@ -245,14 +244,9 @@ Toujours en français, ton chaleureux et professionnel, jamais robotique.`;
       return { reply };
     } catch (err) {
       console.error('Erreur Gemini :', err);
-      if ((err as { status?: number })?.status === 429) {
-        throw new ServiceUnavailableException(
-          'Flora a atteint sa limite de demandes. Merci de réessayer plus tard.',
-        );
-      }
-      throw new InternalServerErrorException(
-        'Le chatbot est momentanément indisponible, réessayez dans un instant.',
-      );
+      // Gemini enrichit les réponses, mais ne doit pas être un point de panne
+      // unique pendant une démonstration ou une indisponibilité du fournisseur.
+      return { reply: offlineFloralReply(dto.message, products, flowers) };
     }
   }
 }
