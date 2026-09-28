@@ -165,7 +165,7 @@ describe('ChatbotService : contexte et erreurs', () => {
     ).resolves.toEqual({ reply: 'Bonjour !' });
     expect(
       generateContent.mock.calls.map(([request]) => request.model),
-    ).toEqual(['gemini-flash-lite-latest', 'gemini-flash-latest']);
+    ).toEqual(['gemini-flash-latest', 'gemini-flash-lite-latest']);
   });
 
   it('explique l’indisponibilité lorsque les deux modèles ont épuisé leur quota', async () => {

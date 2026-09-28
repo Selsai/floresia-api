@@ -35,6 +35,15 @@ export function catalogReply(
 ): string | undefined {
   const question = normalize(message);
 
+  // Les conseils d'entretien les plus fréquents restent disponibles même si
+  // le service d'IA externe est ralenti ou temporairement indisponible.
+  if (
+    /\b(entretien|entretenir|conserver|garder|durer|faner)\b/.test(question) &&
+    /\broses?\b/.test(question)
+  ) {
+    return `Recoupez les tiges de vos roses en biais sur environ 2 cm avec un outil propre, puis placez-les dans un vase lavé rempli d'eau fraîche. Retirez les feuilles qui tremperaient dans l'eau, changez l'eau tous les deux jours et gardez le bouquet à l'écart du soleil direct, des radiateurs et des fruits mûrs.`;
+  }
+
   if (/\b(prix|coute|cout|tarif|combien)\b/.test(question)) {
     const namedProducts = products.filter((product) => {
       const fullName = normalize(product.name);

@@ -53,6 +53,16 @@ const flowers: CatalogFlower[] = [
 ];
 
 describe('Réponses factuelles de Flora', () => {
+  it('répond localement au conseil d’entretien des roses', () => {
+    const reply = catalogReply(
+      'Comment entretenir des roses ?',
+      products,
+      flowers,
+    );
+    expect(reply).toContain('Recoupez les tiges');
+    expect(reply).toContain("changez l'eau tous les deux jours");
+  });
+
   it('recommande uniquement les bouquets de mariage du catalogue', () => {
     const reply = catalogReply(
       'Quels bouquets Florésia peux-tu me recommander pour un mariage ?',

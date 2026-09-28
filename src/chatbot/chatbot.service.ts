@@ -158,7 +158,10 @@ Toujours en français, ton chaleureux et professionnel, jamais robotique.`;
     contents: any[],
     systemInstruction: string,
   ): Promise<string> {
-    const models = ['gemini-flash-lite-latest', 'gemini-flash-latest'];
+    // Le modèle Flash répond de façon plus fiable en production. Le modèle Lite
+    // reste un secours : le placer en premier pouvait consommer deux délais de
+    // 12 secondes avant d'essayer le modèle fonctionnel.
+    const models = ['gemini-flash-latest', 'gemini-flash-lite-latest'];
     let lastError: unknown = new Error('Aucun modèle Gemini disponible.');
 
     for (const model of models) {
