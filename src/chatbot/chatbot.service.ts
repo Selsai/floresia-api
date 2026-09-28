@@ -157,14 +157,18 @@ Toujours en français, ton chaleureux et professionnel, jamais robotique.`;
     contents: any[],
     systemInstruction: string,
   ): Promise<string> {
-    // Le modèle Flash répond de façon plus fiable en production. Le modèle Lite
-    // reste un secours : le placer en premier pouvait consommer deux délais de
-    // 12 secondes avant d'essayer le modèle fonctionnel.
-    const models = ['gemini-flash-latest', 'gemini-flash-lite-latest'];
+    // Versions stables explicites : l'alias "latest" peut changer sans
+    // déploiement. Chaque modèle n'est essayé qu'une fois pour éviter de faire
+    // attendre l'utilisateur avant le passage au secours suivant.
+    const models = [
+      'gemini-3.6-flash',
+      'gemini-3.8-flash',
+      'gemini-3.5-flash-lite',
+    ];
     let lastError: unknown = new Error('Aucun modèle Gemini disponible.');
 
     for (const model of models) {
-      for (let attempt = 1; attempt <= 2; attempt++) {
+      for (let attempt = 1; attempt <= 1; attempt++) {
         try {
           const response = await this.callGemini(
             model,

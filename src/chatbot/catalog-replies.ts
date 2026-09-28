@@ -189,8 +189,18 @@ export function offlineFloralReply(
   if (/\b(chien|chat|animal|toxique|toxicite|ingestion)\b/.test(question)) {
     return `Certaines fleurs peuvent être toxiques pour les animaux, mais le risque dépend de l'espèce exacte. Éloignez le bouquet de l'animal et, en cas d'ingestion ou de symptôme, contactez rapidement un vétérinaire ou un centre antipoison vétérinaire avec le nom précis de la plante.`;
   }
-  if (/\b(signification|symbol|couleur)\b/.test(question)) {
+  if (/\b(signifi|signification|symbol|couleur|veut dire|offrir)\w*\b/.test(question)) {
+    if (/\broses? jaunes?\b/.test(question)) {
+      return `Les roses jaunes évoquent aujourd'hui surtout la joie, l'amitié, l'énergie et les liens chaleureux. Dans certaines traditions anciennes, elles pouvaient aussi symboliser la jalousie ; pour éviter l'ambiguïté, accompagnez-les d'un message amical ou de félicitations.`;
+    }
     return `La signification dépend du contexte : le rouge évoque souvent l'amour, le rose la tendresse, le blanc la pureté ou l'hommage, et le jaune la joie ou l'amitié. Dites-moi la couleur, la fleur et l'occasion concernées pour que je vous conseille plus précisément.`;
+  }
+  if (/\b(mariage)\b/.test(question) && /\b(champetre|saison|septembre|automne)\b/.test(question)) {
+    const available = [...new Set(flowers.filter((f) => f.stock > 0).map((f) => f.name))].slice(0, 5);
+    const catalogNote = available.length
+      ? ` Parmi les familles actuellement disponibles pour la personnalisation : ${available.join(', ')}.`
+      : '';
+    return `Pour un mariage champêtre en septembre, privilégiez une composition souple, peu symétrique, avec des fleurs de tailles variées et quelques feuillages dans des tons naturels.${catalogNote} Vérifiez les couleurs proposées dans l'atelier « Personnalisation », car la disponibilité réelle reste prioritaire.`;
   }
   if (/\b(mariage|anniversaire|naissance|deuil|remerciement|amour|saint-valentin)\b/.test(question)) {
     const category = question.includes('mariage') ? 'MARIAGE'

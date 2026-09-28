@@ -94,6 +94,23 @@ describe('Réponses factuelles de Flora', () => {
     expect(catalogReply(message, products, flowers)).toContain(expected);
   });
 
+  it('explique précisément la signification des roses jaunes', () => {
+    expect(
+      offlineFloralReply('Que signifie offrir des roses jaunes ?', products, flowers),
+    ).toContain("l'amitié");
+  });
+
+  it('adapte un mariage champêtre en septembre aux fleurs disponibles', () => {
+    const reply = offlineFloralReply(
+      'Quelles fleurs pour un mariage champêtre en septembre ?',
+      products,
+      flowers,
+    );
+    expect(reply).toContain('composition souple');
+    expect(reply).toContain('Rose');
+    expect(reply).toContain('disponibilité réelle');
+  });
+
   it('ne confond pas un merci avec le nom du bouquet Merci', () => {
     expect(
       catalogReply('Merci, quel prix pour une rose ?', products, flowers),

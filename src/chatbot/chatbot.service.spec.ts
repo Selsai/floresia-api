@@ -167,7 +167,7 @@ describe('ChatbotService : contexte et erreurs', () => {
     ).resolves.toEqual({ reply: 'Bonjour !' });
     expect(
       generateContent.mock.calls.map(([request]) => request.model),
-    ).toEqual(['gemini-flash-latest', 'gemini-flash-lite-latest']);
+    ).toEqual(['gemini-3.6-flash', 'gemini-3.8-flash']);
   });
 
   it('fournit une réponse locale lorsque les deux modèles ont épuisé leur quota', async () => {
@@ -184,6 +184,6 @@ describe('ChatbotService : contexte et erreurs', () => {
     ).resolves.toEqual({
       reply: expect.stringContaining("Renouvelez l'eau"),
     });
-    expect(generateContent).toHaveBeenCalledTimes(2);
+    expect(generateContent).toHaveBeenCalledTimes(3);
   });
 });
