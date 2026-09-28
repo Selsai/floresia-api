@@ -212,7 +212,7 @@ describe('Continuité de Flora sans service externe', () => {
 
   it('retourne toujours une réponse pour une question non reconnue', () => {
     expect(offlineFloralReply('Peux-tu préciser ?', products, flowers)).toMatch(
-      /ralentissement du service/,
+      /Pour vous répondre précisément/,
     );
   });
 });

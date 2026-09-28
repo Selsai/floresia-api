@@ -152,7 +152,7 @@ describe('ChatbotService : contexte et erreurs', () => {
     await expect(
       service.sendMessage({ message: 'Bonjour' }, 'location-test'),
     ).resolves.toEqual({
-      reply: expect.stringContaining('ralentissement du service'),
+      reply: expect.stringContaining('je suis Flora'),
     });
     expect(generateContent).toHaveBeenCalledTimes(1);
   });
