@@ -26,9 +26,11 @@ describe('ProductsService : catalogue et erreurs', () => {
       orderBy: { createdAt: 'desc' },
     });
   });
-  it('cherche le produit demandé et conserve une absence', async () => {
+  it('renvoie une erreur 404 lorsque le produit est absent', async () => {
     model.findUnique.mockResolvedValue(null);
-    expect(await service.findOne('missing')).toBeNull();
+    await expect(service.findOne('missing')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
     expect(model.findUnique).toHaveBeenCalledWith({ where: { id: 'missing' } });
   });
   it('conserve les données validées du catalogue lors de la création', async () => {

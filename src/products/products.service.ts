@@ -16,10 +16,16 @@ export class ProductsService {
     });
   }
 
-  findOne(id: string) {
-    return this.prisma.product.findUnique({
+  async findOne(id: string) {
+    const product = await this.prisma.product.findUnique({
       where: { id },
     });
+
+    if (!product) {
+      throw new NotFoundException('Produit introuvable.');
+    }
+
+    return product;
   }
 
   create(dto: CreateProductDto) {

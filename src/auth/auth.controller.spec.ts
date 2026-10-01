@@ -20,7 +20,7 @@ describe('AuthController : validation HTTP et profil', () => {
   it.each([
     {
       email: 'invalid',
-      password: 'long-password',
+      password: 'Long-password1',
       firstName: 'Flora',
       lastName: 'Test',
     },
@@ -32,7 +32,7 @@ describe('AuthController : validation HTTP et profil', () => {
     },
     {
       email: 'flora@example.test',
-      password: 'long-password',
+      password: 'Long-password1',
       firstName: 'Flora',
       lastName: 'Test',
       role: 'ADMIN',
@@ -52,12 +52,22 @@ describe('AuthController : validation HTTP et profil', () => {
       .post('/auth/register')
       .send({
         email: 'flora@example.test',
-        password: 'long-password',
+        password: 'Long-password1',
         firstName: 'Flora',
         lastName: 'Test',
       })
       .expect(201);
     expect(service.register).toHaveBeenCalledTimes(1);
+  });
+  it('transmet toute tentative de connexion non vide au service', async () => {
+    await request(fixture.app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: 'flora@example.test', password: 'faux' })
+      .expect(200);
+    expect(service.login).toHaveBeenCalledWith({
+      email: 'flora@example.test',
+      password: 'faux',
+    });
   });
   it('refuse la consultation du profil sans JWT', async () => {
     await request(fixture.app.getHttpServer()).get('/auth/me').expect(401);

@@ -1,5 +1,11 @@
 // Rôle : Validation des données reçues par l’API.
-import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsOptional,
+  IsString,
+  Matches,
+  MinLength,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RegisterDto {
@@ -11,12 +17,22 @@ export class RegisterDto {
   email: string;
 
   @ApiProperty({
-    example: 'Password123',
-    description: 'Mot de passe contenant minimum 8 caractères',
+    example: 'MotDePasse!12',
+    description:
+      'Mot de passe d’au moins 12 caractères avec une majuscule, un chiffre et un caractère spécial',
   })
   @IsString()
-  @MinLength(8, {
-    message: 'Le mot de passe doit contenir au moins 8 caractères.',
+  @MinLength(12, {
+    message: 'Le mot de passe doit contenir au moins 12 caractères.',
+  })
+  @Matches(/(?=.*[A-Z])/, {
+    message: 'Le mot de passe doit contenir au moins une majuscule.',
+  })
+  @Matches(/(?=.*\d)/, {
+    message: 'Le mot de passe doit contenir au moins un chiffre.',
+  })
+  @Matches(/(?=.*[^A-Za-z0-9])/, {
+    message: 'Le mot de passe doit contenir au moins un caractère spécial.',
   })
   password: string;
 

@@ -1,5 +1,5 @@
 // Rôle : Validation des données reçues par l’API.
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginDto {
@@ -11,12 +11,10 @@ export class LoginDto {
   email: string;
 
   @ApiProperty({
-    example: 'Password123',
+    example: 'MotDePasse!12',
     description: 'Mot de passe utilisateur',
   })
   @IsString()
-  @MinLength(8, {
-    message: 'Le mot de passe doit contenir au moins 8 caractères.',
-  })
+  @IsNotEmpty({ message: 'Le mot de passe est requis.' })
   password: string;
 }
