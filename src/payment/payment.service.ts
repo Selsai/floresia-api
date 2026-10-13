@@ -4,19 +4,23 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class PaymentService {
   private stripe: Stripe;
+  private readonly logger = new Logger(PaymentService.name);
 
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly mail: MailService,
   ) {
     this.stripe = new Stripe(
       this.configService.get<string>('STRIPE_SECRET_KEY') ?? '',
@@ -31,6 +35,7 @@ export class PaymentService {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: {
+        user: { select: { email: true } },
         items: {
           include: { product: true },
         },
@@ -71,6 +76,16 @@ export class PaymentService {
 
     const session = await this.stripe.checkout.sessions.create({
       mode: 'payment',
+      customer_email: order.user?.email,
+      invoice_creation: {
+        enabled: true,
+        invoice_data: {
+          metadata: { orderId: order.id },
+          description: `Commande Florésia ${order.id}`,
+          footer:
+            'Florésia - projet pédagogique. Paiement en environnement de test.',
+        },
+      },
       payment_method_types: ['card'],
       line_items: [
         ...order.items.map((item) => ({
@@ -103,9 +118,86 @@ export class PaymentService {
       cancel_url: `${frontendUrl}/commande/annulee?orderId=${order.id}`,
     });
 
+    await this.prisma.order.updateMany({
+      where: { id: order.id, userId, status: 'PENDING' },
+      data: { stripeCheckoutSessionId: session.id },
+    });
     return {
       checkoutUrl: session.url,
     };
+  }
+
+  async getOrderDocument(orderId: string, userId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+    });
+    if (!order) throw new NotFoundException('Commande introuvable');
+    if (order.userId !== userId)
+      throw new ForbiddenException('Accès non autorisé à cette commande');
+    if (
+      !['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(order.status)
+    ) {
+      throw new BadRequestException(
+        'Le document Stripe sera disponible après le paiement.',
+      );
+    }
+    let sessionId = order.stripeCheckoutSessionId;
+    // Compatibilité avec les paiements antérieurs à l’enregistrement de la session.
+    if (!sessionId) {
+      const sessions = await this.stripe.checkout.sessions.list({
+        limit: 100,
+        created: { gte: Math.floor(order.createdAt.getTime() / 1000) - 60 },
+      });
+      sessionId =
+        sessions.data.find(
+          (session) =>
+            session.metadata?.orderId === orderId &&
+            session.payment_status === 'paid',
+        )?.id ?? null;
+      if (sessionId)
+        await this.prisma.order.updateMany({
+          where: { id: orderId, userId },
+          data: { stripeCheckoutSessionId: sessionId },
+        });
+    }
+    if (!sessionId)
+      throw new NotFoundException(
+        'Aucun document Stripe disponible pour cette ancienne commande.',
+      );
+    const session = await this.stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['invoice', 'payment_intent.latest_charge'],
+    });
+    if (
+      session.metadata?.orderId !== orderId ||
+      session.payment_status !== 'paid' ||
+      session.currency !== 'eur' ||
+      session.amount_total !== Math.round(order.totalAmount * 100)
+    ) {
+      throw new BadRequestException(
+        'Le document ne correspond pas au paiement de cette commande.',
+      );
+    }
+    const invoice =
+      typeof session.invoice === 'string'
+        ? await this.stripe.invoices.retrieve(session.invoice)
+        : session.invoice;
+    if (invoice?.hosted_invoice_url)
+      return { type: 'invoice', url: invoice.hosted_invoice_url };
+    const intent =
+      typeof session.payment_intent === 'string'
+        ? await this.stripe.paymentIntents.retrieve(session.payment_intent, {
+            expand: ['latest_charge'],
+          })
+        : session.payment_intent;
+    const charge =
+      typeof intent?.latest_charge === 'string'
+        ? await this.stripe.charges.retrieve(intent.latest_charge)
+        : intent?.latest_charge;
+    if (charge?.receipt_url)
+      return { type: 'receipt', url: charge.receipt_url };
+    throw new NotFoundException(
+      'Le document Stripe est en préparation. Réessayez dans quelques instants.',
+    );
   }
 
   // ==========================
@@ -145,8 +237,39 @@ export class PaymentService {
         // Le filtre rend les événements répétés sans effet et évite de rétrograder un statut.
         await this.prisma.order.updateMany({
           where: { id: orderId, status: 'PENDING' },
-          data: { status: 'PAID' },
+          data: {
+            status: 'PAID',
+            ...(session.id ? { stripeCheckoutSessionId: session.id } : {}),
+          },
         });
+        const confirmed = await this.prisma.order.findUnique({
+          where: { id: orderId },
+          include: {
+            user: { select: { email: true, firstName: true } },
+            address: true,
+            items: { include: { product: true } },
+          },
+        });
+        if (
+          confirmed &&
+          ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(
+            confirmed.status,
+          ) &&
+          !confirmed.confirmationEmailSentAt
+        ) {
+          try {
+            await this.mail.sendOrderConfirmation(confirmed);
+            await this.prisma.order.updateMany({
+              where: { id: orderId, confirmationEmailSentAt: null },
+              data: { confirmationEmailSentAt: new Date() },
+            });
+          } catch (error) {
+            this.logger.warn(
+              'Paiement confirmé ; email à réessayer au prochain événement Stripe.',
+            );
+            throw error;
+          }
+        }
       }
     }
     return { received: true };

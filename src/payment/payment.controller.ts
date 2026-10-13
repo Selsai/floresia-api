@@ -7,6 +7,8 @@ import {
   Req,
   Headers,
   UseGuards,
+  Get,
+  Param,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
@@ -21,6 +23,16 @@ import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
 @Controller('payment')
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('orders/:orderId/document')
+  getOrderDocument(
+    @Param('orderId') orderId: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    return this.paymentService.getOrderDocument(orderId, user.userId);
+  }
 
   @ApiBearerAuth()
   @ApiBody({ type: CreateCheckoutSessionDto })

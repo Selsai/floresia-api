@@ -81,6 +81,9 @@ model Flower {
 }
 
 model Order {
+  stripeCheckoutSessionId String?
+  confirmationEmailSentAt DateTime?
+  deliveryDate DateTime?
   id             String         @id @default(cuid())
   userId         String
   addressId      String

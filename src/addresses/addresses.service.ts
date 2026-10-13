@@ -28,8 +28,16 @@ export class AddressesService {
       });
     }
 
+    const existing =
+      (await this.prisma.address.findMany({
+        where: { userId },
+        select: { label: true },
+      })) ?? [];
+    let number = 1;
+    while (existing.some((a) => a.label === `Adresse ${number}`)) number++;
+    const label = dto.label?.trim() || `Adresse ${number}`;
     return this.prisma.address.create({
-      data: { ...dto, userId, country: dto.country ?? 'France' },
+      data: { ...dto, label, userId, country: dto.country ?? 'France' },
     });
   }
 
@@ -51,7 +59,12 @@ export class AddressesService {
 
     return this.prisma.address.update({
       where: { id: addressId },
-      data: dto,
+      data: {
+        ...dto,
+        ...(dto.label !== undefined
+          ? { label: dto.label.trim() || address.label }
+          : {}),
+      },
     });
   }
 

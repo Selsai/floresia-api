@@ -51,11 +51,54 @@ const mailLayout = (
 export class MailService {
   private resend = new Resend(process.env.RESEND_API_KEY);
   private from = process.env.MAIL_FROM || 'no-reply@floresia.fr';
+  private get sender() {
+    return this.from.includes('<') ? this.from : `Florésia <${this.from}>`;
+  }
+
+  async sendOrderConfirmation(order: {
+    id: string;
+    totalAmount: number;
+    deliveryMethod: string;
+    deliveryDate?: Date | null;
+    user: { email: string; firstName: string };
+    address: { street: string; zipCode: string; city: string };
+    items: {
+      quantity: number;
+      unitPrice: number;
+      customNote?: string | null;
+      product: { name: string };
+    }[];
+  }) {
+    const euros = (amount: number) =>
+      amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+    const rows = order.items
+      .map(
+        (item) =>
+          `<li style="margin-bottom:12px">${item.quantity} × ${escapeHtml(item.product.name)} : ${euros(item.unitPrice * item.quantity)}${item.customNote ? `<br><small>${escapeHtml(item.customNote)}</small>` : ''}</li>`,
+      )
+      .join('');
+    const result = await this.resend.emails.send(
+      {
+        from: this.sender,
+        to: order.user.email,
+        subject: 'Florésia : confirmation de votre commande',
+        html: mailLayout(
+          'Merci pour votre commande',
+          `Bonjour ${escapeHtml(order.user.firstName)}, votre paiement de test a été confirmé.`,
+          `<p>Commande ${escapeHtml(order.id)}</p><ul style="text-align:left">${rows}</ul><p><strong>Total TTC : ${euros(order.totalAmount)}</strong></p><p>${order.deliveryMethod === 'PICKUP' ? 'Retrait simulé' : 'Livraison simulée'}${order.deliveryDate ? ` le ${order.deliveryDate.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })}` : ''}</p><p>${escapeHtml(order.address.street)}, ${escapeHtml(order.address.zipCode)} ${escapeHtml(order.address.city)}</p>`,
+          'Projet pédagogique : aucune vente, livraison ni récupération en boutique réelle. Retrouvez votre commande dans votre espace Florésia.',
+        ),
+      },
+      { idempotencyKey: `order-confirmation/${order.id}` },
+    );
+    if (result.error)
+      throw new Error('Envoi de confirmation de commande indisponible.');
+  }
 
   async sendVerificationCode(to: string, code: string) {
     // Envoie le code dans le modèle Florésia.
     await this.resend.emails.send({
-      from: `Florésia <${this.from}>`,
+      from: this.sender,
       to,
       subject: 'Votre code de vérification Florésia',
       html: mailLayout(
@@ -71,7 +114,7 @@ export class MailService {
   async sendPasswordResetLink(to: string, resetUrl: string) {
     // Envoie le lien de réinitialisation sécurisé.
     await this.resend.emails.send({
-      from: `Florésia <${this.from}>`,
+      from: this.sender,
       to,
       subject: 'Réinitialisation de votre mot de passe Florésia',
       html: mailLayout(

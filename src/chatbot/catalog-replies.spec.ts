@@ -96,7 +96,11 @@ describe('Réponses factuelles de Flora', () => {
 
   it('explique précisément la signification des roses jaunes', () => {
     expect(
-      offlineFloralReply('Que signifie offrir des roses jaunes ?', products, flowers),
+      offlineFloralReply(
+        'Que signifie offrir des roses jaunes ?',
+        products,
+        flowers,
+      ),
     ).toContain("l'amitié");
   });
 

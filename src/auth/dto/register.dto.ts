@@ -1,23 +1,17 @@
 // Rôle : Validation des données reçues par l’API.
-import {
-  IsEmail,
-  IsOptional,
-  IsString,
-  Matches,
-  MinLength,
-} from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsString, Matches, MinLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
   @ApiProperty({
-    example: 'selsabil@gmail.com',
+    example: 'utilisateur@example.com',
     description: 'Adresse email de l’utilisateur',
   })
   @IsEmail({}, { message: 'Adresse email invalide.' })
   email: string;
 
   @ApiProperty({
-    example: 'MotDePasse!12',
+    example: 'ExempleMotDePasse!12',
     description:
       'Mot de passe d’au moins 12 caractères avec une majuscule, un chiffre et un caractère spécial',
   })
@@ -37,24 +31,16 @@ export class RegisterDto {
   password: string;
 
   @ApiProperty({
-    example: 'Selsabil',
+    example: 'Exemple',
     description: 'Prénom de l’utilisateur',
   })
   @IsString({ message: 'Le prénom est requis.' })
   firstName: string;
 
   @ApiProperty({
-    example: 'Amairi',
+    example: 'Utilisateur',
     description: 'Nom de famille de l’utilisateur',
   })
   @IsString({ message: 'Le nom est requis.' })
   lastName: string;
-
-  @ApiPropertyOptional({
-    example: '+21612345678',
-    description: 'Numéro de téléphone optionnel',
-  })
-  @IsOptional()
-  @IsString()
-  phone?: string;
 }

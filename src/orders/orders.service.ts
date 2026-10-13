@@ -72,6 +72,32 @@ export class OrdersService {
   // ==========================
 
   async create(userId: string, dto: CreateOrderDto) {
+    let deliveryDate: Date | undefined;
+    if (dto.deliveryDate) {
+      const today = new Date(
+        new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' }) +
+          'T12:00:00Z',
+      );
+      let remaining = 2;
+      while (remaining) {
+        today.setUTCDate(today.getUTCDate() + 1);
+        if (![0, 6].includes(today.getUTCDay())) remaining--;
+      }
+      deliveryDate = new Date(dto.deliveryDate);
+      const latest = new Date(today);
+      latest.setUTCDate(latest.getUTCDate() + 90);
+      if (
+        !Number.isFinite(deliveryDate.getTime()) ||
+        deliveryDate.toISOString().slice(0, 10) <
+          today.toISOString().slice(0, 10) ||
+        deliveryDate > latest ||
+        [0, 6].includes(deliveryDate.getUTCDay())
+      ) {
+        throw new BadRequestException(
+          'Choisissez une date de démonstration en semaine, à partir de deux jours ouvrés et dans les 90 prochains jours.',
+        );
+      }
+    }
     // Valide le panier puis calcule le total officiel.
     const address = await this.prisma.address.findUnique({
       where: { id: dto.addressId },
@@ -81,6 +107,16 @@ export class OrdersService {
       throw new ForbiddenException('Cette adresse ne vous appartient pas.');
 
     const deliveryMethod = dto.deliveryMethod ?? 'DELIVERY';
+    if (
+      deliveryMethod === 'DELIVERY' &&
+      !/^(?:(?:\+33|0)[1-9](?:[ .-]?\d{2}){4})$/.test(
+        address.phone?.trim() ?? '',
+      )
+    ) {
+      throw new BadRequestException(
+        'Renseignez un téléphone français valide dans l’adresse de livraison.',
+      );
+    }
     if (deliveryMethod === 'PICKUP' && !dto.pickupStoreId?.trim()) {
       throw new BadRequestException('Sélectionnez un point de retrait.');
     }
@@ -202,6 +238,7 @@ export class OrdersService {
     return this.prisma.order.create({
       data: {
         totalAmount: (subtotalCents + deliveryCents) / 100,
+        deliveryDate,
         deliveryMethod,
         pickupStoreId:
           deliveryMethod === 'PICKUP' ? dto.pickupStoreId : undefined,

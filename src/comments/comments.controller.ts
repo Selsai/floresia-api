@@ -13,7 +13,14 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiExtraModels,
+  ApiTags,
+  getSchemaPath,
+} from '@nestjs/swagger';
 
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -26,6 +33,7 @@ import {
 } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Comments')
+@ApiExtraModels(CreateCommentDto)
 @Controller('comments')
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
@@ -52,6 +60,25 @@ export class CommentsController {
   @ApiConsumes('multipart/form-data')
   @UseGuards(JwtAuthGuard)
   @Post()
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @ApiBody({
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(CreateCommentDto) },
+        {
+          type: 'object',
+          properties: {
+            image: {
+              type: 'string',
+              format: 'binary',
+              description:
+                'Image facultative en multipart : JPG, PNG ou WebP, jusqu’à 5 Mo.',
+            },
+          },
+        },
+      ],
+    },
+  })
   @UseInterceptors(
     FileInterceptor('image', {
       storage: diskStorage({

@@ -15,7 +15,14 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiExtraModels,
+  ApiTags,
+  getSchemaPath,
+} from '@nestjs/swagger';
 
 import { GalleryService } from './gallery.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -30,6 +37,7 @@ import {
 } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Gallery')
+@ApiExtraModels(SubmitGalleryPhotoDto)
 @Controller('gallery')
 export class GalleryController {
   constructor(private readonly galleryService: GalleryService) {}
@@ -54,6 +62,24 @@ export class GalleryController {
 
   @ApiBearerAuth()
   @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(SubmitGalleryPhotoDto) },
+        {
+          type: 'object',
+          required: ['image'],
+          properties: {
+            image: {
+              type: 'string',
+              format: 'binary',
+              description: 'Image JPG, PNG ou WebP, jusqu’à 5 Mo.',
+            },
+          },
+        },
+      ],
+    },
+  })
   @UseGuards(JwtAuthGuard)
   @Post('mine')
   @UseInterceptors(

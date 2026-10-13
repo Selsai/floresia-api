@@ -65,6 +65,7 @@ describe('OrdersService : montants et composition', () => {
     prisma.address.findUnique.mockResolvedValue({
       id: 'adresse-1',
       userId: 'client-1',
+      phone: '0612345678',
     });
     prisma.product.findMany.mockResolvedValue([
       { id: 'bouquet-1', price: 32 },
@@ -73,6 +74,17 @@ describe('OrdersService : montants et composition', () => {
     prisma.flower.findMany.mockResolvedValue([rose, eucalyptus]);
     prisma.order.create.mockImplementation(async (input) => input.data);
     service = new OrdersService(prisma as unknown as PrismaService);
+  });
+  it('demande un téléphone à la livraison même si l’inscription n’en demande pas', async () => {
+    prisma.address.findUnique.mockResolvedValue({
+      id: 'adresse-1',
+      userId: 'client-1',
+      phone: null,
+    });
+    await expect(service.create('client-1', base)).rejects.toThrow(
+      'téléphone français valide',
+    );
+    expect(prisma.order.create).not.toHaveBeenCalled();
   });
 
   it('ignore les prix falsifiés et calcule 32 € + 5,90 €', async () => {
@@ -89,6 +101,24 @@ describe('OrdersService : montants et composition', () => {
       items: [{ ...base.items[0], quantity: 2 }],
     });
     expect(result.totalAmount).toBe(64);
+  });
+  it('refuse une date passée avant tout accès aux données', async () => {
+    await expect(
+      service.create('client-1', {
+        ...base,
+        deliveryDate: '2020-01-01T12:00:00Z',
+      }),
+    ).rejects.toThrow(BadRequestException);
+    expect(prisma.order.create).not.toHaveBeenCalled();
+  });
+  it('refuse une date au-delà du périmètre de démonstration', async () => {
+    await expect(
+      service.create('client-1', {
+        ...base,
+        deliveryDate: '2099-01-01T12:00:00Z',
+      }),
+    ).rejects.toThrow(BadRequestException);
+    expect(prisma.order.create).not.toHaveBeenCalled();
   });
 
   it('ne facture pas de livraison pour un retrait', async () => {

@@ -1,5 +1,5 @@
 // Rôle : Validation des données reçues par l’API.
-import { PartialType } from '@nestjs/mapped-types';
+import { PartialType } from '@nestjs/swagger';
 import { CreateGalleryPhotoDto } from './create-gallery-photo.dto';
 
 export class UpdateGalleryPhotoDto extends PartialType(CreateGalleryPhotoDto) {}

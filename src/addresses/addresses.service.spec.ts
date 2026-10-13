@@ -42,6 +42,16 @@ describe('AddressesService : propriété des adresses', () => {
     });
     expect(address.updateMany).not.toHaveBeenCalled();
   });
+  it('attribue le premier libellé disponible lorsque le champ est vide', async () => {
+    address.findMany.mockResolvedValue([
+      { label: 'Adresse 1' },
+      { label: 'Adresse 3' },
+    ]);
+    await service.create('u', { ...dto, label: '' });
+    expect(address.create).toHaveBeenCalledWith({
+      data: { ...dto, label: 'Adresse 2', userId: 'u', country: 'France' },
+    });
+  });
   it('désactive les adresses par défaut uniquement pour ce compte', async () => {
     await service.create('u', { ...dto, isDefault: true, country: 'Belgique' });
     expect(address.updateMany).toHaveBeenCalledWith({

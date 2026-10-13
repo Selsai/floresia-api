@@ -59,6 +59,19 @@ describe('AuthController : validation HTTP et profil', () => {
       .expect(201);
     expect(service.register).toHaveBeenCalledTimes(1);
   });
+  it('ne collecte plus le téléphone à l’inscription', async () => {
+    await request(fixture.app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email: 'flora@example.test',
+        password: 'Long-password1',
+        firstName: 'Flora',
+        lastName: 'Test',
+        phone: '0612345678',
+      })
+      .expect(400);
+    expect(service.register).not.toHaveBeenCalled();
+  });
   it('transmet toute tentative de connexion non vide au service', async () => {
     await request(fixture.app.getHttpServer())
       .post('/auth/login')

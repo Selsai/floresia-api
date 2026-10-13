@@ -11,9 +11,10 @@ import { MailService } from '../src/mail/mail.service';
 import { ChatbotService } from '../src/chatbot/chatbot.service';
 import { CUSTOM_BOUQUET_PRODUCT_ID } from '../src/chatbot/catalog-replies';
 
-const checkout = jest
-  .fn()
-  .mockResolvedValue({ url: 'https://checkout.example.test/session' });
+const checkout = jest.fn().mockResolvedValue({
+  id: 'cs_test_http',
+  url: 'https://checkout.example.test/session',
+});
 let webhookEvent: object;
 jest.mock('stripe', () =>
   jest.fn().mockImplementation(() => ({
@@ -27,6 +28,7 @@ type Item = {
   product: { id: string; name: string };
 };
 type Order = {
+  stripeCheckoutSessionId?: string;
   id: string;
   userId: string;
   totalAmount: number;
@@ -81,7 +83,13 @@ describe('Application Florésia : commande et paiement via HTTP', () => {
     user: {
       findUnique: jest.fn(() => ({ id: 'u', isEmailVerified: emailVerified })),
     },
-    address: { findUnique: jest.fn(() => ({ id: 'addr', userId: 'u' })) },
+    address: {
+      findUnique: jest.fn(() => ({
+        id: 'addr',
+        userId: 'u',
+        phone: '0612345678',
+      })),
+    },
     product: { findMany: jest.fn(() => products) },
     flower: { findMany: jest.fn(() => flowers) },
     order: {
@@ -113,12 +121,17 @@ describe('Application Florésia : commande et paiement via HTTP', () => {
           where,
           data,
         }: {
-          where: { id: string; status: string };
-          data: { status: string };
+          where: { id: string; status?: string; userId?: string };
+          data: Partial<Order>;
         }) => {
           const order = orders.get(where.id);
-          if (!order || order.status !== where.status) return { count: 0 };
-          order.status = data.status;
+          if (
+            !order ||
+            (where.status && order.status !== where.status) ||
+            (where.userId && order.userId !== where.userId)
+          )
+            return { count: 0 };
+          Object.assign(order, data);
           return { count: 1 };
         },
       ),
@@ -147,6 +160,7 @@ describe('Application Florésia : commande et paiement via HTTP', () => {
       .useValue({
         sendVerificationCode: jest.fn(),
         sendPasswordResetLink: jest.fn(),
+        sendOrderConfirmation: jest.fn().mockResolvedValue(undefined),
       })
       .overrideProvider(ChatbotService)
       .useValue({

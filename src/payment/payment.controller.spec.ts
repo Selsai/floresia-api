@@ -6,6 +6,10 @@ import { createHttpFixture } from '../../test/http-fixture';
 describe('PaymentController : identité et webhook brut', () => {
   let fixture: Awaited<ReturnType<typeof createHttpFixture>>;
   const service = {
+    getOrderDocument: jest.fn().mockResolvedValue({
+      type: 'invoice',
+      url: 'https://invoice.stripe.com/test',
+    }),
     createCheckoutSession: jest
       .fn()
       .mockResolvedValue({ url: 'https://checkout.example.test' }),
@@ -20,6 +24,22 @@ describe('PaymentController : identité et webhook brut', () => {
   });
   afterAll(async () => fixture.app.close());
   beforeEach(() => jest.clearAllMocks());
+  it('refuse le document Stripe sans connexion', async () => {
+    await request(fixture.app.getHttpServer())
+      .get('/payment/orders/order-test/document')
+      .expect(401);
+    expect(service.getOrderDocument).not.toHaveBeenCalled();
+  });
+  it('utilise l’identité signée pour consulter le document', async () => {
+    await request(fixture.app.getHttpServer())
+      .get('/payment/orders/order-test/document')
+      .set('Authorization', 'Bearer ' + fixture.userToken)
+      .expect(200);
+    expect(service.getOrderDocument).toHaveBeenCalledWith(
+      'order-test',
+      'user-test',
+    );
+  });
   it('refuse une session sans compte connecté', async () => {
     await request(fixture.app.getHttpServer())
       .post('/payment/checkout-session')

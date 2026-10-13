@@ -44,7 +44,6 @@ export class AuthService {
         passwordHash,
         firstName: registerDto.firstName,
         lastName: registerDto.lastName,
-        phone: registerDto.phone,
       },
       select: {
         id: true,

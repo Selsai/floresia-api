@@ -1,10 +1,13 @@
+import { ApiProperty } from '@nestjs/swagger';
 // Rôle : Validation des données reçues par l’API.
 import { IsString, Matches, MinLength } from 'class-validator';
 
 export class ChangePasswordDto {
+  @ApiProperty({ example: 'AncienMotDePasse!12' })
   @IsString()
   currentPassword: string;
 
+  @ApiProperty({ example: 'ExempleMotDePasse!12' })
   @IsString()
   @MinLength(12, {
     message: 'Le mot de passe doit contenir au moins 12 caractères.',
@@ -20,6 +23,7 @@ export class ChangePasswordDto {
   })
   newPassword: string;
 
+  @ApiProperty({ example: 'ExempleMotDePasse!12' })
   @IsString()
   confirmPassword: string;
 }
