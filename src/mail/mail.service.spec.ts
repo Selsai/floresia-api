@@ -33,7 +33,7 @@ describe('Email de confirmation Florésia', () => {
     );
     const html = send.mock.calls[0][0].html;
     expect(html).toContain('&lt;Rose&gt;');
-    expect(html).toContain('aucune vente');
+    expect(html).toContain('mode test');
     expect(html).toContain('1 rue de Test');
   });
   it('signale les erreurs du prestataire pour permettre un nouvel essai', async () => {

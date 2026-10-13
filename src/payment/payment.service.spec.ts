@@ -41,6 +41,8 @@ describe('PaymentService : autorisation du paiement', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    updateMany.mockReset().mockResolvedValue({ count: 1 });
+    sendOrderConfirmation.mockReset().mockResolvedValue(undefined);
     findUnique.mockResolvedValue(order);
     service = new PaymentService(
       { get: () => 'https://example.test' } as unknown as ConfigService,
@@ -53,6 +55,88 @@ describe('PaymentService : autorisation du paiement', () => {
     return (Stripe as unknown as jest.Mock).mock.results[0].value.checkout
       .sessions.create;
   }
+
+  function pendingPayment(paymentStatus = 'paid') {
+    const tracked = {
+      ...order,
+      stripeCheckoutSessionId: 'cs_test_1',
+      confirmationEmailSentAt: null as Date | null,
+      user: { email: 'client@example.com', firstName: 'Exemple' },
+      address: { street: 'Rue Exemple', zipCode: '75001', city: 'Paris' },
+    };
+    findUnique.mockImplementation(async () => ({ ...tracked }));
+    updateMany.mockImplementation(async ({ data }: { data: object }) => {
+      Object.assign(tracked, data);
+      return { count: 1 };
+    });
+    const retrieve = (Stripe as unknown as jest.Mock).mock.results[0].value
+      .checkout.sessions.retrieve;
+    retrieve.mockResolvedValue({
+      id: 'cs_test_1',
+      metadata: { orderId: order.id },
+      payment_status: paymentStatus,
+      amount_total: 700,
+      currency: 'eur',
+    });
+    return { tracked, retrieve };
+  }
+
+  it('confirme un paiement auprès de Stripe même si aucun webhook n’est arrivé', async () => {
+    const { tracked } = pendingPayment();
+    await expect(
+      service.confirmOrderPayment(order.id, 'client-1'),
+    ).resolves.toMatchObject({ status: 'PAID', paid: true });
+    expect(tracked.status).toBe('PAID');
+    expect(sendOrderConfirmation).toHaveBeenCalledTimes(1);
+    await service.confirmOrderPayment(order.id, 'client-1');
+    expect(sendOrderConfirmation).toHaveBeenCalledTimes(1);
+  });
+
+  it('ne confirme jamais une session non payée', async () => {
+    pendingPayment('unpaid');
+    await expect(
+      service.confirmOrderPayment(order.id, 'client-1'),
+    ).resolves.toEqual({ status: 'PENDING', paid: false });
+    expect(updateMany).not.toHaveBeenCalled();
+    expect(sendOrderConfirmation).not.toHaveBeenCalled();
+  });
+
+  it('protège la confirmation de paiement contre un autre compte', async () => {
+    const { retrieve } = pendingPayment();
+    await expect(
+      service.confirmOrderPayment(order.id, 'autre-client'),
+    ).rejects.toThrow(ForbiddenException);
+    expect(retrieve).not.toHaveBeenCalled();
+  });
+
+  it('ne bloque pas le statut payé si le prestataire email est indisponible', async () => {
+    pendingPayment();
+    sendOrderConfirmation.mockRejectedValueOnce(
+      new Error('Erreur email de test'),
+    );
+    await expect(
+      service.confirmOrderPayment(order.id, 'client-1'),
+    ).resolves.toMatchObject({
+      status: 'PAID',
+      paid: true,
+      confirmationEmailSentAt: null,
+    });
+  });
+
+  it('refuse une confirmation dont le montant ne correspond pas', async () => {
+    const { retrieve } = pendingPayment();
+    retrieve.mockResolvedValue({
+      id: 'cs_test_1',
+      metadata: { orderId: order.id },
+      payment_status: 'paid',
+      amount_total: 701,
+      currency: 'eur',
+    });
+    await expect(
+      service.confirmOrderPayment(order.id, 'client-1'),
+    ).rejects.toThrow(BadRequestException);
+    expect(updateMany).not.toHaveBeenCalled();
+  });
 
   it('protège le document Stripe contre la consultation par un autre client', async () => {
     findUnique.mockResolvedValue({

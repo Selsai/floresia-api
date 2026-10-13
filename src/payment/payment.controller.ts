@@ -26,6 +26,16 @@ export class PaymentController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @Post('orders/:orderId/confirm')
+  confirmOrderPayment(
+    @Param('orderId') orderId: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    return this.paymentService.confirmOrderPayment(orderId, user.userId);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Get('orders/:orderId/document')
   getOrderDocument(
     @Param('orderId') orderId: string,

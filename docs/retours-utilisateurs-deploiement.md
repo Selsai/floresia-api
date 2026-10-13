@@ -21,3 +21,11 @@ Vérification finale après publication : inscription sans téléphone, ajout d'
 Les nouvelles sessions de paiement demandent la création d'une facture Stripe. Le bouton de consultation des commandes payées ouvre la facture hébergée, ou le reçu si aucune facture n'existe. Pour les anciennes commandes sans référence de session, la récupération essaie les 100 sessions les plus récentes depuis la création de la commande. Une ancienne commande peut donc ne pas disposer de document récupérable ; aucun lien n'est inventé.
 
 Le ZIP destiné à Hostinger contient uniquement le front-end compilé. Publier également les modifications de l'API sur Render après les migrations pour activer les factures, le téléphone de livraison, les emails et les exemples Swagger. Les secrets restent dans les variables d'environnement du serveur et ne doivent pas être placés dans public_html.
+
+## Correction du 14 octobre : confirmation et heure souhaitée
+
+La migration `20261014010000_order_delivery_time` ajoute une heure souhaitée facultative dans Order. Les anciennes commandes conservent uniquement leur date ; aucune heure n'est inventée pour elles.
+
+Le retour du paiement et le bouton « Vérifier le paiement » appellent la confirmation authentifiée `POST /payment/orders/:orderId/confirm`. Le serveur contrôle le propriétaire, consulte la session auprès de Stripe et valide le montant et la devise avant de passer la commande à PAID. La même fonction traite les webhooks et les retours, et la confirmation email reste protégée contre les doublons. Une panne de l'email ne remet pas un paiement validé en attente.
+
+Le webhook reste nécessaire pour les clients qui ne reviennent pas sur le site. Dans le même compte et le même environnement de test que la clé utilisée par Render, vérifier la destination `https://api.floresia.fr/payment/webhook`, les événements `checkout.session.completed` et `checkout.session.async_payment_succeeded`, puis le secret de cette destination dans `STRIPE_WEBHOOK_SECRET`. Le secret d'une écoute Stripe CLI locale ne remplace pas celui de la destination publique. Ne pas copier les secrets dans une capture ou un message.

@@ -60,6 +60,7 @@ export class MailService {
     totalAmount: number;
     deliveryMethod: string;
     deliveryDate?: Date | null;
+    deliveryTime?: string | null;
     user: { email: string; firstName: string };
     address: { street: string; zipCode: string; city: string };
     items: {
@@ -84,15 +85,20 @@ export class MailService {
         subject: 'Florésia : confirmation de votre commande',
         html: mailLayout(
           'Merci pour votre commande',
-          `Bonjour ${escapeHtml(order.user.firstName)}, votre paiement de test a été confirmé.`,
-          `<p>Commande ${escapeHtml(order.id)}</p><ul style="text-align:left">${rows}</ul><p><strong>Total TTC : ${euros(order.totalAmount)}</strong></p><p>${order.deliveryMethod === 'PICKUP' ? 'Retrait simulé' : 'Livraison simulée'}${order.deliveryDate ? ` le ${order.deliveryDate.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })}` : ''}</p><p>${escapeHtml(order.address.street)}, ${escapeHtml(order.address.zipCode)} ${escapeHtml(order.address.city)}</p>`,
-          'Projet pédagogique : aucune vente, livraison ni récupération en boutique réelle. Retrouvez votre commande dans votre espace Florésia.',
+          `Bonjour ${escapeHtml(order.user.firstName)}, votre paiement a été confirmé.`,
+          `<p>Commande ${escapeHtml(order.id)}</p><ul style="text-align:left">${rows}</ul><p><strong>Total TTC : ${euros(order.totalAmount)}</strong></p><p>${order.deliveryMethod === 'PICKUP' ? 'Retrait' : 'Livraison'}${order.deliveryDate ? ` le ${order.deliveryDate.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })}` : ''}${order.deliveryTime ? ` à ${escapeHtml(order.deliveryTime)}` : ''}</p><p>${escapeHtml(order.address.street)}, ${escapeHtml(order.address.zipCode)} ${escapeHtml(order.address.city)}</p>`,
+          'Confirmation en mode test. Retrouvez votre commande dans votre espace Florésia.',
         ),
       },
       { idempotencyKey: `order-confirmation/${order.id}` },
     );
-    if (result.error)
-      throw new Error('Envoi de confirmation de commande indisponible.');
+    if (result.error || !result.data?.id) {
+      const failure = new Error(
+        `Envoi de confirmation indisponible (${result.error?.name ?? 'missing_delivery_id'}).`,
+      );
+      failure.name = 'OrderEmailDeliveryError';
+      throw failure;
+    }
   }
 
   async sendVerificationCode(to: string, code: string) {

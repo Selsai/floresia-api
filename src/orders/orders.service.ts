@@ -239,6 +239,7 @@ export class OrdersService {
       data: {
         totalAmount: (subtotalCents + deliveryCents) / 100,
         deliveryDate,
+        deliveryTime: dto.deliveryTime,
         deliveryMethod,
         pickupStoreId:
           deliveryMethod === 'PICKUP' ? dto.pickupStoreId : undefined,

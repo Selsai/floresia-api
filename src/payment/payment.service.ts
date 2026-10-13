@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
   Logger,
+  HttpException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
@@ -83,7 +84,7 @@ export class PaymentService {
           metadata: { orderId: order.id },
           description: `Commande Florésia ${order.id}`,
           footer:
-            'Florésia - projet pédagogique. Paiement en environnement de test.',
+            'Merci pour votre confiance. Retrouvez votre commande sur floresia.fr.',
         },
       },
       payment_method_types: ['card'],
@@ -138,7 +139,7 @@ export class PaymentService {
       !['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(order.status)
     ) {
       throw new BadRequestException(
-        'Le document Stripe sera disponible après le paiement.',
+        'La facture sera disponible après le paiement.',
       );
     }
     let sessionId = order.stripeCheckoutSessionId;
@@ -162,7 +163,7 @@ export class PaymentService {
     }
     if (!sessionId)
       throw new NotFoundException(
-        'Aucun document Stripe disponible pour cette ancienne commande.',
+        'Aucun document de paiement disponible pour cette ancienne commande.',
       );
     const session = await this.stripe.checkout.sessions.retrieve(sessionId, {
       expand: ['invoice', 'payment_intent.latest_charge'],
@@ -196,7 +197,7 @@ export class PaymentService {
     if (charge?.receipt_url)
       return { type: 'receipt', url: charge.receipt_url };
     throw new NotFoundException(
-      'Le document Stripe est en préparation. Réessayez dans quelques instants.',
+      'Le document est en préparation. Réessayez dans quelques instants.',
     );
   }
 
@@ -222,56 +223,144 @@ export class PaymentService {
       const session = event.data.object;
       const orderId = session.metadata?.orderId;
       if (orderId && session.payment_status === 'paid') {
-        const order = await this.prisma.order.findUnique({
-          where: { id: orderId },
-        });
-        if (!order) throw new NotFoundException('Commande introuvable');
-        if (
-          session.currency !== 'eur' ||
-          session.amount_total !== Math.round(order.totalAmount * 100)
-        ) {
-          throw new BadRequestException(
-            'Le paiement ne correspond pas au montant de la commande.',
-          );
-        }
-        // Le filtre rend les événements répétés sans effet et évite de rétrograder un statut.
-        await this.prisma.order.updateMany({
-          where: { id: orderId, status: 'PENDING' },
-          data: {
-            status: 'PAID',
-            ...(session.id ? { stripeCheckoutSessionId: session.id } : {}),
-          },
-        });
-        const confirmed = await this.prisma.order.findUnique({
-          where: { id: orderId },
-          include: {
-            user: { select: { email: true, firstName: true } },
-            address: true,
-            items: { include: { product: true } },
-          },
-        });
-        if (
-          confirmed &&
-          ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(
-            confirmed.status,
-          ) &&
-          !confirmed.confirmationEmailSentAt
-        ) {
-          try {
-            await this.mail.sendOrderConfirmation(confirmed);
-            await this.prisma.order.updateMany({
-              where: { id: orderId, confirmationEmailSentAt: null },
-              data: { confirmationEmailSentAt: new Date() },
-            });
-          } catch (error) {
-            this.logger.warn(
-              'Paiement confirmé ; email à réessayer au prochain événement Stripe.',
-            );
-            throw error;
-          }
-        }
+        await this.applyPaidSession(session);
       }
     }
     return { received: true };
+  }
+
+  // Vérification serveur au retour du paiement, indépendante du délai du webhook.
+  async confirmOrderPayment(orderId: string, userId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+    });
+    if (!order) throw new NotFoundException('Commande introuvable');
+    if (order.userId !== userId)
+      throw new ForbiddenException('Accès non autorisé à cette commande');
+    if (order.status === 'CANCELLED') {
+      return {
+        status: order.status,
+        paid: ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(
+          order.status,
+        ),
+      };
+    }
+    let sessionId = order.stripeCheckoutSessionId;
+    if (!sessionId) {
+      const sessions = await this.stripe.checkout.sessions.list({
+        limit: 100,
+        created: { gte: Math.floor(order.createdAt.getTime() / 1000) - 60 },
+      });
+      sessionId =
+        sessions.data.find(
+          (item) =>
+            item.metadata?.orderId === order.id &&
+            item.payment_status === 'paid',
+        )?.id ?? null;
+      if (sessionId)
+        await this.prisma.order.updateMany({
+          where: { id: order.id, userId },
+          data: { stripeCheckoutSessionId: sessionId },
+        });
+    }
+    if (!sessionId)
+      return {
+        status: order.status,
+        paid: ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(
+          order.status,
+        ),
+      };
+    const session = await this.stripe.checkout.sessions.retrieve(sessionId);
+    if (session.metadata?.orderId !== orderId)
+      throw new BadRequestException(
+        'Le paiement ne correspond pas à cette commande.',
+      );
+    if (session.payment_status !== 'paid')
+      return { status: order.status, paid: false };
+    try {
+      await this.applyPaidSession(session);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const current = await this.prisma.order.findUnique({
+        where: { id: orderId },
+      });
+      if (
+        !current ||
+        !['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(current.status)
+      )
+        throw error;
+      this.logger.warn(
+        'Paiement validé ; la confirmation email reste à réessayer.',
+      );
+    }
+    const current = await this.prisma.order.findUnique({
+      where: { id: orderId },
+    });
+    return {
+      status: current?.status ?? order.status,
+      confirmationEmailSentAt: current?.confirmationEmailSentAt ?? null,
+      paid: Boolean(
+        current &&
+        ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(current.status),
+      ),
+    };
+  }
+
+  private async applyPaidSession(session: Stripe.Checkout.Session) {
+    const orderId = session.metadata?.orderId;
+    if (!orderId || session.payment_status !== 'paid')
+      throw new BadRequestException('Paiement non confirmé.');
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+    });
+    if (!order) throw new NotFoundException('Commande introuvable');
+    if (
+      session.currency !== 'eur' ||
+      session.amount_total !== Math.round(order.totalAmount * 100)
+    ) {
+      throw new BadRequestException(
+        'Le paiement ne correspond pas au montant de la commande.',
+      );
+    }
+    // Le filtre rend les événements répétés sans effet et évite de rétrograder un statut.
+    await this.prisma.order.updateMany({
+      where: { id: orderId, status: 'PENDING' },
+      data: {
+        status: 'PAID',
+        ...(session.id ? { stripeCheckoutSessionId: session.id } : {}),
+      },
+    });
+    const confirmed = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        user: { select: { email: true, firstName: true } },
+        address: true,
+        items: { include: { product: true } },
+      },
+    });
+    if (
+      confirmed &&
+      ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(
+        confirmed.status,
+      ) &&
+      !confirmed.confirmationEmailSentAt
+    ) {
+      try {
+        await this.mail.sendOrderConfirmation(confirmed);
+        await this.prisma.order.updateMany({
+          where: { id: orderId, confirmationEmailSentAt: null },
+          data: { confirmationEmailSentAt: new Date() },
+        });
+      } catch (error) {
+        const reason =
+          error instanceof Error && error.name === 'OrderEmailDeliveryError'
+            ? error.message
+            : 'Erreur temporaire du service email.';
+        this.logger.warn(
+          `Paiement confirmé ; ${reason} Confirmation à réessayer.`,
+        );
+        throw error;
+      }
+    }
   }
 }

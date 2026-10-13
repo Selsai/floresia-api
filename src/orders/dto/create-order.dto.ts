@@ -14,6 +14,7 @@ import {
   IsString,
   Max,
   MaxLength,
+  Matches,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -110,6 +111,15 @@ export class OrderItemDto {
 }
 
 export class CreateOrderDto {
+  @ApiPropertyOptional({
+    example: '10:30',
+    description: 'Heure souhaitée à Paris, au format HH:mm.',
+  })
+  @IsOptional()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'Indiquez une heure valide au format HH:mm.',
+  })
+  deliveryTime?: string;
   @ApiPropertyOptional({
     example: '2026-10-20T12:00:00.000Z',
     description:

@@ -81,6 +81,7 @@ model Flower {
 }
 
 model Order {
+  deliveryTime String?
   stripeCheckoutSessionId String?
   confirmationEmailSentAt DateTime?
   deliveryDate DateTime?
