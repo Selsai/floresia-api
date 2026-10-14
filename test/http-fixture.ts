@@ -28,7 +28,20 @@ export async function createHttpFixture(
         provide: PrismaService,
         useValue: {
           user: {
-            findUnique: jest.fn().mockResolvedValue({ isEmailVerified: true }),
+            findUnique: jest.fn(({ where }: { where: { id: string } }) =>
+              ['user-test', 'admin-test'].includes(where.id)
+                ? {
+                    id: where.id,
+                    email:
+                      where.id === 'admin-test'
+                        ? 'admin@example.test'
+                        : 'flora@example.test',
+                    role: where.id === 'admin-test' ? 'ADMIN' : 'USER',
+                    sessionVersion: 0,
+                    isEmailVerified: true,
+                  }
+                : null,
+            ),
           },
         },
       },

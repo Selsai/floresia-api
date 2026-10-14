@@ -1,5 +1,5 @@
 // Rôle : Règles métier et accès aux données.
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { Resend } from 'resend';
 
 const escapeHtml = (value: string) =>
@@ -115,6 +115,33 @@ export class MailService {
         'Si vous n’êtes pas à l’origine de cette demande, vous pouvez ignorer cet email.',
       ),
     });
+  }
+
+  async sendAccountDeletion(
+    to: string,
+    firstName: string,
+    url: string,
+    deadline: Date,
+  ) {
+    const date = deadline.toLocaleDateString('fr-FR', {
+      timeZone: 'Europe/Paris',
+    });
+    const safeUrl = escapeHtml(url);
+    const result = await this.resend.emails.send({
+      from: this.sender,
+      to,
+      subject: 'Florésia : demande de suppression de votre compte',
+      html: mailLayout(
+        'Votre compte a été désactivé',
+        `Bonjour ${escapeHtml(firstName)}, vous avez demandé la suppression de votre compte.`,
+        `<p style="line-height:1.7">Nous vous conseillons de télécharger les factures de vos commandes. Vous disposez de 30 jours, jusqu’au ${date}, pour le faire depuis cet espace sécurisé.</p><p><a href="${safeUrl}" style="color:#b03070">Télécharger mes factures</a></p><p style="line-height:1.7">Si vous n’êtes pas à l’origine de cette demande, cliquez sur le bouton ci-dessous. Vous devrez choisir un nouveau mot de passe pour réactiver votre compte.</p><p><a href="${safeUrl}" style="display:inline-block;background:#b03070;color:white;padding:14px 22px;border-radius:24px;text-decoration:none">Réactiver mon compte</a></p>`,
+        'Après 30 jours, la réactivation ne sera plus possible et vos données de profil seront effacées. Les documents nécessaires au suivi des commandes et aux obligations comptables peuvent être conservés. Ce lien est personnel : ne le partagez pas.',
+      ),
+    });
+    if (result.error || !result.data?.id)
+      throw new ServiceUnavailableException(
+        'L’email de sécurité n’a pas pu être envoyé. Votre compte reste actif.',
+      );
   }
 
   async sendPasswordResetLink(to: string, resetUrl: string) {

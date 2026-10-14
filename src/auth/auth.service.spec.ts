@@ -103,6 +103,7 @@ describe('AuthService : comptes et récupération', () => {
       sub: user.id,
       email: user.email,
       role: 'USER',
+      sessionVersion: 0,
     });
     expect(result.token).toBe('signed-jwt');
     expect(result.user).not.toHaveProperty('passwordHash');
@@ -275,6 +276,8 @@ describe('AuthService : comptes et récupération', () => {
       where: {
         resetToken: 'valid-token',
         resetTokenExpires: { gt: expect.any(Date) },
+        deletionRequestedAt: null,
+        accountErasedAt: null,
       },
     });
     expect(prisma.user.update).toHaveBeenCalledWith({

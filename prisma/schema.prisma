@@ -10,6 +10,12 @@ datasource db {
 }
 
 model User {
+  deletionRequestedAt DateTime?
+  deletionDeadline DateTime?
+  deletionTokenHash String? @unique
+  accountErasedAt DateTime?
+  sessionVersion Int @default(0)
+  pendingMediaDeletion String[] @default([])
   id                      String     @id @default(cuid())
   email                   String     @unique
   passwordHash            String
@@ -32,6 +38,7 @@ model User {
   orders                  Order[]
   testimonials  Testimonial[]
   galleryPhotos GalleryPhoto[]
+  @@index([deletionDeadline, accountErasedAt])
 }
 
 model Address {

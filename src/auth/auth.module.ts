@@ -9,12 +9,16 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './roles/roles.guard';
 import { MailModule } from '../mail/mail.module';
+import { AccountDeletionController } from './account-deletion.controller';
+import { AccountDeletionService } from './account-deletion.service';
+import { PaymentModule } from '../payment/payment.module';
 
 @Module({
   imports: [
     PrismaModule,
     PassportModule,
     MailModule,
+    PaymentModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -31,8 +35,8 @@ import { MailModule } from '../mail/mail.module';
       },
     }),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, RolesGuard],
+  controllers: [AuthController, AccountDeletionController],
+  providers: [AuthService, JwtStrategy, RolesGuard, AccountDeletionService],
   exports: [JwtModule, RolesGuard],
 })
 export class AuthModule {}

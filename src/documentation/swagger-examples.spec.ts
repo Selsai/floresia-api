@@ -29,8 +29,16 @@ import { UpdateOrderDto } from '../orders/dto/update-order.dto';
 import { UpdateUserRoleDto } from '../users/dto/update-user-role.dto';
 import { CreateCheckoutSessionDto } from '../payment/dto/create-checkout-session.dto';
 import { SendMessageDto } from '../chatbot/dto/send-message.dto';
+import {
+  DeleteAccountDto,
+  DeletionTokenDto,
+  DeletionDocumentDto,
+} from '../auth/dto/account-deletion.dto';
 
 const models = [
+  DeleteAccountDto,
+  DeletionTokenDto,
+  DeletionDocumentDto,
   RegisterDto,
   LoginDto,
   UpdateProfileDto,

@@ -10,6 +10,23 @@ jest.mock('resend', () => ({
   })),
 }));
 describe('Email de confirmation Florésia', () => {
+  it('envoie les accès aux factures et à la récupération sans divulguer le mot de passe', async () => {
+    const service = new MailService();
+    await service.sendAccountDeletion(
+      'client@example.test',
+      '<Exemple>',
+      'https://floresia.fr/compte-suppression#token=exemple',
+      new Date('2026-11-14T12:00:00Z'),
+    );
+    const send = (Resend as unknown as jest.Mock).mock.results.at(-1)!.value
+      .emails.send;
+    const html = send.mock.calls[0][0].html;
+    expect(html).toContain('&lt;Exemple&gt;');
+    expect(html).toContain('30 jours');
+    expect(html).toContain('Réactiver mon compte');
+    expect(html).toContain('Télécharger mes factures');
+    expect(html).not.toContain('passwordHash');
+  });
   const order = {
     id: 'order-test',
     totalAmount: 37.9,

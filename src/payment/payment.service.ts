@@ -333,13 +333,16 @@ export class PaymentService {
     const confirmed = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        user: { select: { email: true, firstName: true } },
+        user: {
+          select: { email: true, firstName: true, accountErasedAt: true },
+        },
         address: true,
         items: { include: { product: true } },
       },
     });
     if (
       confirmed &&
+      !confirmed.user?.accountErasedAt &&
       ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(
         confirmed.status,
       ) &&

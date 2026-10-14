@@ -80,7 +80,7 @@ export class AuthService {
       where: { email },
     });
 
-    if (!user) {
+    if (!user || user.deletionRequestedAt || user.accountErasedAt) {
       throw new UnauthorizedException('Email ou mot de passe incorrect.');
     }
 
@@ -93,7 +93,12 @@ export class AuthService {
       throw new UnauthorizedException('Email ou mot de passe incorrect.');
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      sessionVersion: user.sessionVersion ?? 0,
+    };
     const token = this.jwtService.sign(payload);
 
     return {
@@ -224,8 +229,8 @@ export class AuthService {
       where: { email: normalizedEmail },
     });
 
-    if (!user) {
-      throw new BadRequestException('Aucun compte associé à cet email.');
+    if (!user || user.deletionRequestedAt || user.accountErasedAt) {
+      throw new BadRequestException('Aucun compte actif associé à cet email.');
     }
 
     if (user.isEmailVerified) {
@@ -256,7 +261,7 @@ export class AuthService {
       where: { email },
     });
 
-    if (!user) {
+    if (!user || user.deletionRequestedAt || user.accountErasedAt) {
       throw new BadRequestException('Compte introuvable.');
     }
 
@@ -302,7 +307,7 @@ export class AuthService {
 
     // Réponse identique que le compte existe ou non
     // (anti-énumération de comptes)
-    if (!user) {
+    if (!user || user.deletionRequestedAt || user.accountErasedAt) {
       return {
         message: 'Si un compte existe avec cet email, un lien a été envoyé.',
       };
@@ -336,6 +341,8 @@ export class AuthService {
       where: {
         resetToken: token,
         resetTokenExpires: { gt: new Date() },
+        deletionRequestedAt: null,
+        accountErasedAt: null,
       },
     });
 

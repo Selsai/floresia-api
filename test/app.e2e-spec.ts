@@ -81,7 +81,15 @@ describe('Application Florésia : commande et paiement via HTTP', () => {
   ];
   const prisma = {
     user: {
-      findUnique: jest.fn(() => ({ id: 'u', isEmailVerified: emailVerified })),
+      findMany: jest.fn(() => []),
+      findFirst: jest.fn(() => null),
+      findUnique: jest.fn((args: { where: { id: string } }) => ({
+        id: args.where.id,
+        email: 'flora@example.test',
+        role: 'USER',
+        sessionVersion: 0,
+        isEmailVerified: emailVerified,
+      })),
     },
     address: {
       findUnique: jest.fn(() => ({
@@ -325,5 +333,29 @@ describe('Application Florésia : commande et paiement via HTTP', () => {
       .get('/users')
       .set('Authorization', 'Bearer ' + token)
       .expect(403);
+  });
+  it('refuse une suppression sans session', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/deletion/request')
+      .send({ password: 'ExempleMotDePasse!12' })
+      .expect(401);
+  });
+  it('refuse un jeton de récupération mal formé', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/deletion/access')
+      .send({ token: 'incorrect' })
+      .expect(400);
+  });
+  it('refuse une récupération avec un lien expiré', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/deletion/restore')
+      .send({ token: 'a'.repeat(64), newPassword: 'ExempleMotDePasse!12' })
+      .expect(400);
+  });
+  it('applique la règle des 12 caractères à la réactivation du compte', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/deletion/restore')
+      .send({ token: 'a'.repeat(64), newPassword: 'Court!1' })
+      .expect(400);
   });
 });
