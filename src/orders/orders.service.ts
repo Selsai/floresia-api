@@ -107,6 +107,28 @@ export class OrdersService {
       throw new ForbiddenException('Cette adresse ne vous appartient pas.');
 
     const deliveryMethod = dto.deliveryMethod ?? 'DELIVERY';
+    if (address.purpose === 'BILLING')
+      throw new BadRequestException(
+        'Choisissez une adresse de livraison pour le destinataire.',
+      );
+    if (
+      deliveryMethod === 'DELIVERY' &&
+      address.zipCode &&
+      !/^(750(0[1-9]|1[0-9]|20)|75116)$/.test(address.zipCode)
+    )
+      throw new BadRequestException(
+        'La livraison est limitée à Paris : 75001 à 75020 et 75116.',
+      );
+    const billing =
+      dto.billingAddressId && dto.billingAddressId !== address.id
+        ? await this.prisma.address.findUnique({
+            where: { id: dto.billingAddressId },
+          })
+        : address;
+    if (!billing || billing.userId !== userId)
+      throw new ForbiddenException(
+        'Cette adresse de facturation ne vous appartient pas.',
+      );
     if (
       deliveryMethod === 'DELIVERY' &&
       !/^(?:(?:\+33|0)[1-9](?:[ .-]?\d{2}){4})$/.test(
@@ -238,6 +260,14 @@ export class OrdersService {
     return this.prisma.order.create({
       data: {
         totalAmount: (subtotalCents + deliveryCents) / 100,
+        billingAddress: {
+          fullName: billing.fullName ?? '',
+          street: billing.street ?? '',
+          complement: billing.complement ?? '',
+          zipCode: billing.zipCode ?? '',
+          city: billing.city ?? '',
+          country: billing.country ?? 'France',
+        },
         deliveryDate,
         deliveryTime: dto.deliveryTime,
         deliveryMethod,

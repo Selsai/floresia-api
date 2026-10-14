@@ -27,13 +27,42 @@ describe('AddressesService : propriété des adresses', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     service = new AddressesService({ address } as unknown as PrismaService);
-    address.findUnique.mockResolvedValue({ id: 'a', userId: 'u' });
+    address.findUnique.mockResolvedValue({
+      ...dto,
+      id: 'a',
+      userId: 'u',
+      purpose: 'DELIVERY',
+    });
   });
   it('limite la liste au compte connecté', async () => {
     await service.findAll('u');
     expect(address.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { userId: 'u' } }),
     );
+  });
+  it('accepte une facturation à Lyon sans téléphone', async () => {
+    await service.create('u', {
+      ...dto,
+      purpose: 'BILLING',
+      city: 'Lyon',
+      zipCode: '69001',
+      phone: undefined,
+    });
+    expect(address.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ purpose: 'BILLING', zipCode: '69001' }),
+      }),
+    );
+  });
+  it('refuse une livraison en dehors de Paris', async () => {
+    await expect(
+      service.create('u', { ...dto, zipCode: '69001' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(address.create).not.toHaveBeenCalled();
+  });
+  it('accepte le code postal parisien 75116', async () => {
+    await service.create('u', { ...dto, zipCode: '75116' });
+    expect(address.create).toHaveBeenCalled();
   });
   it('associe le propriétaire et le pays par défaut à la création', async () => {
     await service.create('u', dto);
@@ -53,13 +82,13 @@ describe('AddressesService : propriété des adresses', () => {
     });
   });
   it('désactive les adresses par défaut uniquement pour ce compte', async () => {
-    await service.create('u', { ...dto, isDefault: true, country: 'Belgique' });
+    await service.create('u', { ...dto, isDefault: true, country: 'France' });
     expect(address.updateMany).toHaveBeenCalledWith({
-      where: { userId: 'u' },
+      where: { userId: 'u', purpose: 'DELIVERY' },
       data: { isDefault: false },
     });
     expect(address.create).toHaveBeenCalledWith({
-      data: { ...dto, isDefault: true, country: 'Belgique', userId: 'u' },
+      data: { ...dto, isDefault: true, country: 'France', userId: 'u' },
     });
   });
   it.each(['update', 'remove'] as const)(
@@ -96,7 +125,7 @@ describe('AddressesService : propriété des adresses', () => {
   it('change l’adresse par défaut du même compte', async () => {
     await service.update('u', 'a', { isDefault: true });
     expect(address.updateMany).toHaveBeenCalledWith({
-      where: { userId: 'u' },
+      where: { userId: 'u', purpose: 'DELIVERY' },
       data: { isDefault: false },
     });
   });

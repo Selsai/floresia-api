@@ -181,6 +181,9 @@ export class AccountDeletionService implements OnModuleInit, OnModuleDestroy {
             verificationCode: null,
             verificationCodeExpires: null,
             accountErasedAt: new Date(),
+            cart: [],
+            cartOperationIds: [],
+            cartVersion: { increment: 1 },
             sessionVersion: { increment: 1 },
           },
         });

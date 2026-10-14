@@ -94,6 +94,54 @@ describe('OrdersService : montants et composition', () => {
       prisma.order.create.mock.calls[0][0].data.items.create[0].unitPrice,
     ).toBe(32);
   });
+  it('conserve une facturation à Lyon différente de la livraison parisienne', async () => {
+    prisma.address.findUnique.mockImplementation(
+      async ({ where }: { where: { id: string } }) =>
+        where.id === 'facturation'
+          ? {
+              id: 'facturation',
+              userId: 'client-1',
+              purpose: 'BILLING',
+              fullName: 'Exemple Client',
+              street: '1 rue Exemple',
+              city: 'Lyon',
+              zipCode: '69001',
+              country: 'France',
+            }
+          : {
+              id: 'adresse-1',
+              userId: 'client-1',
+              phone: '0612345678',
+              purpose: 'DELIVERY',
+              zipCode: '75001',
+            },
+    );
+    const order = await service.create('client-1', {
+      ...base,
+      billingAddressId: 'facturation',
+    });
+    expect(order.address).toEqual({ connect: { id: 'adresse-1' } });
+    expect(order.billingAddress).toEqual(
+      expect.objectContaining({
+        city: 'Lyon',
+        zipCode: '69001',
+        fullName: 'Exemple Client',
+      }),
+    );
+  });
+  it('refuse la facturation avec une adresse d’un autre compte', async () => {
+    prisma.address.findUnique
+      .mockResolvedValueOnce({
+        id: 'adresse-1',
+        userId: 'client-1',
+        phone: '0612345678',
+      })
+      .mockResolvedValueOnce({ id: 'facturation', userId: 'autre' });
+    await expect(
+      service.create('client-1', { ...base, billingAddressId: 'facturation' }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(prisma.order.create).not.toHaveBeenCalled();
+  });
 
   it('offre la livraison à partir de 50 €', async () => {
     const result = await service.create('client-1', {

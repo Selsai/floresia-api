@@ -75,9 +75,47 @@ export class PaymentService {
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
 
+    const billing =
+      order.billingAddress &&
+      typeof order.billingAddress === 'object' &&
+      !Array.isArray(order.billingAddress)
+        ? order.billingAddress
+        : null;
+    let customerId: string | undefined;
+    if (
+      billing &&
+      typeof billing.street === 'string' &&
+      billing.street &&
+      typeof billing.zipCode === 'string' &&
+      typeof billing.city === 'string'
+    ) {
+      const customer = await this.stripe.customers.create(
+        {
+          email: order.user?.email,
+          name:
+            typeof billing.fullName === 'string' ? billing.fullName : undefined,
+          address: {
+            line1: billing.street,
+            line2:
+              typeof billing.complement === 'string'
+                ? billing.complement
+                : undefined,
+            postal_code: billing.zipCode,
+            city: billing.city,
+            country: 'FR',
+          },
+          metadata: { orderId: order.id },
+        },
+        { idempotencyKey: `order-customer/${order.id}` },
+      );
+      customerId = customer.id;
+    }
+
     const session = await this.stripe.checkout.sessions.create({
       mode: 'payment',
-      customer_email: order.user?.email,
+      ...(customerId
+        ? { customer: customerId }
+        : { customer_email: order.user?.email }),
       invoice_creation: {
         enabled: true,
         invoice_data: {

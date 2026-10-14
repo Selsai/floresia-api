@@ -4,11 +4,16 @@ import {
   IsBoolean,
   IsNumber,
   IsOptional,
+  IsIn,
   IsString,
   Matches,
 } from 'class-validator';
 
 export class UpdateAddressDto {
+  @ApiPropertyOptional({ example: 'BILLING', enum: ['DELIVERY', 'BILLING'] })
+  @IsOptional()
+  @IsIn(['DELIVERY', 'BILLING'])
+  purpose?: string;
   @ApiPropertyOptional({ example: 'Domicile' })
   @IsString()
   @IsOptional()
@@ -37,10 +42,7 @@ export class UpdateAddressDto {
   @ApiPropertyOptional({ example: '75001' })
   @IsString()
   @IsOptional()
-  @Matches(/^750(0[1-9]|1[0-9]|20)$/, {
-    message:
-      'Florésia ne livre actuellement que dans Paris intramuros (codes postaux 75001 à 75020).',
-  })
+  @Matches(/^\d{5}$/, { message: 'Le code postal doit contenir 5 chiffres.' })
   zipCode?: string;
 
   @ApiPropertyOptional({ example: 'France' })

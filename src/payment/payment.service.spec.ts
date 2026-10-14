@@ -13,6 +13,7 @@ import { MailService } from '../mail/mail.service';
 jest.mock('stripe', () =>
   jest.fn().mockImplementation(() => ({
     webhooks: { constructEvent: jest.fn() },
+    customers: { create: jest.fn().mockResolvedValue({ id: 'cus_example' }) },
     checkout: {
       sessions: {
         create: jest.fn().mockResolvedValue({
@@ -280,6 +281,48 @@ describe('PaymentService : autorisation du paiement', () => {
         unit_amount: 590,
       },
     });
+  });
+  it('établit la facture avec les coordonnées du payeur sans transmettre celles du destinataire', async () => {
+    findUnique.mockResolvedValue({
+      ...order,
+      user: { email: 'client@example.com' },
+      billingAddress: {
+        fullName: 'Exemple Client',
+        street: '1 rue Exemple',
+        zipCode: '69001',
+        city: 'Lyon',
+        country: 'France',
+      },
+      address: {
+        fullName: 'Destinataire',
+        street: 'Rue Livraison',
+        phone: '0612345678',
+        zipCode: '75001',
+      },
+    });
+    await service.createCheckoutSession(order.id, 'client-1');
+    const customerCreate = (Stripe as unknown as jest.Mock).mock.results[0]
+      .value.customers.create;
+    expect(customerCreate).toHaveBeenCalledWith(
+      {
+        email: 'client@example.com',
+        name: 'Exemple Client',
+        address: {
+          line1: '1 rue Exemple',
+          line2: undefined,
+          postal_code: '69001',
+          city: 'Lyon',
+          country: 'FR',
+        },
+        metadata: { orderId: order.id },
+      },
+      { idempotencyKey: `order-customer/${order.id}` },
+    );
+    expect(stripeCreate()).toHaveBeenCalledWith(
+      expect.objectContaining({ customer: 'cus_example' }),
+    );
+    expect(stripeCreate().mock.calls[0][0]).not.toHaveProperty('shipping');
+    expect(customerCreate.mock.calls[0][0]).not.toHaveProperty('phone');
   });
 
   it('refuse un total incompatible avec les lignes de commande', async () => {

@@ -111,6 +111,11 @@ export class OrderItemDto {
 }
 
 export class CreateOrderDto {
+  @ApiPropertyOptional({ example: 'id-adresse-facturation-exemple' })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  billingAddressId?: string;
   @ApiPropertyOptional({
     example: '10:30',
     description: 'Heure souhaitée à Paris, au format HH:mm.',

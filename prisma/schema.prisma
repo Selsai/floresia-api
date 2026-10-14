@@ -10,6 +10,9 @@ datasource db {
 }
 
 model User {
+  cart Json @default("[]")
+  cartVersion Int @default(0)
+  cartOperationIds String[] @default([])
   deletionRequestedAt DateTime?
   deletionDeadline DateTime?
   deletionTokenHash String? @unique
@@ -42,6 +45,7 @@ model User {
 }
 
 model Address {
+  purpose String @default("DELIVERY")
   id         String   @id @default(cuid())
   userId     String
   label      String
@@ -88,6 +92,7 @@ model Flower {
 }
 
 model Order {
+  billingAddress Json?
   deliveryTime String?
   stripeCheckoutSessionId String?
   confirmationEmailSentAt DateTime?

@@ -4,11 +4,18 @@ import {
   IsBoolean,
   IsNumber,
   IsOptional,
+  IsIn,
+  IsNotEmpty,
+  MaxLength,
   IsString,
   Matches,
 } from 'class-validator';
 
 export class CreateAddressDto {
+  @ApiPropertyOptional({ example: 'DELIVERY', enum: ['DELIVERY', 'BILLING'] })
+  @IsOptional()
+  @IsIn(['DELIVERY', 'BILLING'])
+  purpose?: string;
   @ApiPropertyOptional({ example: 'Domicile' })
   @IsOptional()
   @IsString()
@@ -16,6 +23,8 @@ export class CreateAddressDto {
 
   @ApiProperty({ example: 'Exemple Utilisateur' })
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
   fullName: string;
 
   @ApiProperty({ example: '1 rue Exemple' })
@@ -33,10 +42,7 @@ export class CreateAddressDto {
 
   @ApiProperty({ example: '75001' })
   @IsString()
-  @Matches(/^750(0[1-9]|1[0-9]|20)$/, {
-    message:
-      'Florésia ne livre actuellement que dans Paris intramuros (codes postaux 75001 à 75020).',
-  })
+  @Matches(/^\d{5}$/, { message: 'Le code postal doit contenir 5 chiffres.' })
   zipCode: string;
 
   @ApiPropertyOptional({ example: 'France' })
@@ -44,13 +50,18 @@ export class CreateAddressDto {
   @IsOptional()
   country?: string;
 
-  @ApiProperty({ example: '0612345678' })
+  @ApiPropertyOptional({
+    example: '0612345678',
+    description:
+      'Obligatoire pour une adresse de livraison, facultatif pour la facturation.',
+  })
+  @IsOptional()
   @IsString()
   @Matches(/^(?:(?:\+33|0)[1-9](?:[ .-]?\d{2}){4})$/, {
     message:
       'Le numéro de téléphone doit être un numéro français valide (ex: 06 12 34 56 78).',
   })
-  phone: string;
+  phone?: string;
 
   @ApiPropertyOptional({ example: true })
   @IsBoolean()
