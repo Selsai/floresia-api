@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   Patch,
   Post,
@@ -16,6 +17,7 @@ import { CreateTestimonialDto } from './dto/create-testimonial.dto';
 import { UpdateTestimonialDto } from './dto/update-testimonial.dto';
 import { SubmitTestimonialDto } from './dto/submit-testimonial.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { Roles } from '../auth/roles/roles.decorator';
 import { RolesGuard } from '../auth/roles/roles.guard';
 import {
@@ -47,13 +49,17 @@ export class TestimonialsController {
   }
 
   @Get()
-  findAll() {
-    return this.testimonialsService.findAll();
+  @Header('Cache-Control', 'private, no-store')
+  @UseGuards(OptionalJwtAuthGuard)
+  findAll(@CurrentUser() user?: AuthenticatedUser) {
+    return this.testimonialsService.findAll(user);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.testimonialsService.findOne(id);
+  @Header('Cache-Control', 'private, no-store')
+  @UseGuards(OptionalJwtAuthGuard)
+  findOne(@Param('id') id: string, @CurrentUser() user?: AuthenticatedUser) {
+    return this.testimonialsService.findOnePublic(id, user);
   }
 
   @ApiBearerAuth()

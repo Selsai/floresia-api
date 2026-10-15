@@ -8,6 +8,23 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateTestimonialDto } from './dto/create-testimonial.dto';
 import { UpdateTestimonialDto } from './dto/update-testimonial.dto';
 import { SubmitTestimonialDto } from './dto/submit-testimonial.dto';
+import { createFlowerAlias } from '../common/flower-alias';
+import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
+import type { Testimonial } from '@prisma/client';
+
+function presentTestimonial(
+  testimonial: Testimonial,
+  viewer?: AuthenticatedUser,
+) {
+  const { authorId, ...content } = testimonial;
+  return {
+    ...content,
+    authorId: testimonial.isAnonymous ? undefined : authorId,
+    canDelete: Boolean(
+      viewer && (viewer.userId === authorId || viewer.role === 'ADMIN'),
+    ),
+  };
+}
 
 @Injectable()
 export class TestimonialsService {
@@ -17,8 +34,17 @@ export class TestimonialsService {
     return this.prisma.testimonial.create({ data: dto });
   }
 
-  findAll() {
-    return this.prisma.testimonial.findMany({ orderBy: { createdAt: 'desc' } });
+  async findAll(viewer?: AuthenticatedUser) {
+    const testimonials = await this.prisma.testimonial.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return (testimonials || []).map((testimonial) =>
+      presentTestimonial(testimonial, viewer),
+    );
+  }
+
+  async findOnePublic(id: string, viewer?: AuthenticatedUser) {
+    return presentTestimonial(await this.findOne(id), viewer);
   }
 
   async findOne(id: string) {
@@ -44,15 +70,21 @@ export class TestimonialsService {
       );
     }
 
-    return this.prisma.testimonial.create({
+    const testimonial = await this.prisma.testimonial.create({
       data: {
-        authorName: `${user.firstName} ${user.lastName.charAt(0)}.`,
+        authorName: dto.isAnonymous
+          ? createFlowerAlias()
+          : `${user.firstName} ${user.lastName.charAt(0)}.`,
         content: dto.content,
         rating: dto.rating,
         occasion: dto.occasion,
         authorId: userId,
+        ...(dto.isAnonymous ? { isAnonymous: true } : {}),
       },
     });
+    return testimonial
+      ? presentTestimonial(testimonial, { userId, role: 'USER', email: '' })
+      : testimonial;
   }
 
   async remove(id: string, userId: string, role: string) {

@@ -1,0 +1,3 @@
+ALTER TABLE "Comment" ADD COLUMN "isAnonymous" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Comment" ADD COLUMN "publicAlias" TEXT;
+ALTER TABLE "Testimonial" ADD COLUMN "isAnonymous" BOOLEAN NOT NULL DEFAULT false;

@@ -1,8 +1,22 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // Rôle : Validation des données reçues par l’API.
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class SubmitTestimonialDto {
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Publier sous un nom floral anonyme.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isAnonymous?: boolean;
   @ApiProperty({ example: 'Exemple de texte à adapter.' })
   @IsString()
   content: string;

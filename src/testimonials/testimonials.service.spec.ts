@@ -36,6 +36,29 @@ describe('TestimonialsService : publication et propriété', () => {
   it('retrouve une publication existante', async () => {
     expect(await service.findOne('p')).toEqual({ id: 'p', authorId: 'u' });
   });
+  it('publie un nom floral et ne rend jamais l’identifiant privé d’un avis anonyme', async () => {
+    model.create.mockImplementation(({ data }) =>
+      Promise.resolve({ ...data, id: 'p' }),
+    );
+    const created = await service.submit('u', {
+      content: 'Très beau bouquet',
+      rating: 4,
+      isAnonymous: true,
+    });
+    const saved = model.create.mock.calls[0][0].data;
+    expect(saved.authorName).toMatch(/^[\p{L}]+ anonyme$/u);
+    expect(saved.authorId).toBe('u');
+    expect(created?.canDelete).toBe(true);
+    expect(JSON.stringify(created)).not.toContain('"authorId"');
+    model.findMany.mockResolvedValue([{ ...saved, id: 'p' }]);
+    model.findUnique.mockResolvedValue({ ...saved, id: 'p' });
+    const listed = await service.findAll();
+    expect(listed[0].authorName).toBe(saved.authorName);
+    expect(listed[0].canDelete).toBe(false);
+    expect(JSON.stringify(await service.findOnePublic('p'))).not.toContain(
+      '"authorId"',
+    );
+  });
   it('refuse une publication inconnue', async () => {
     model.findUnique.mockResolvedValue(null);
     await expect(service.findOne('p')).rejects.toBeInstanceOf(

@@ -43,7 +43,7 @@ describe('CommentsService : participation et suppression', () => {
     expect(prisma.comment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         distinct: ['authorId'],
-        where: { articleId: 'a' },
+        where: { articleId: 'a', isAnonymous: false },
       }),
     );
   });
@@ -56,6 +56,53 @@ describe('CommentsService : participation et suppression', () => {
         }),
       }),
     );
+  });
+  it('masque les identités anonymes dans les commentaires et leurs réponses', async () => {
+    const anonymous = {
+      id: 'c',
+      authorId: 'secret-user',
+      isAnonymous: true,
+      publicAlias: 'Tulipe anonyme',
+      author: { id: 'secret-user', firstName: 'Identité', lastName: 'Privée' },
+      replies: [],
+    };
+    prisma.comment.findMany.mockResolvedValue([
+      {
+        ...anonymous,
+        replies: [
+          { ...anonymous, id: 'reply', publicAlias: 'Marguerite anonyme' },
+        ],
+      },
+    ]);
+    const publicResult = await service.findByArticle('a');
+    expect(JSON.stringify(publicResult)).not.toMatch(
+      /secret-user|Identité|Privée/,
+    );
+    expect(JSON.stringify(publicResult)).toContain('Marguerite anonyme');
+    expect(publicResult[0].canDelete).toBe(false);
+    const ownResult = await service.findByArticle('a', {
+      userId: 'secret-user',
+      email: 'exemple@example.test',
+      role: 'USER',
+    });
+    expect(ownResult[0].canDelete).toBe(true);
+    expect(JSON.stringify(ownResult)).not.toContain('secret-user');
+  });
+  it('conserve le lien privé au compte et un nom floral stable pour une publication anonyme', async () => {
+    prisma.comment.create.mockImplementation(({ data }) =>
+      Promise.resolve({
+        ...data,
+        id: 'c',
+        author: { id: 'u', firstName: 'Identité', lastName: 'Privée' },
+      }),
+    );
+    const result = await service.create('u', { ...dto, isAnonymous: true });
+    const saved = prisma.comment.create.mock.calls[0][0].data;
+    expect(saved.authorId).toBe('u');
+    expect(saved.isAnonymous).toBe(true);
+    expect(saved.publicAlias).toMatch(/^[\p{L}]+ anonyme$/u);
+    expect(result?.publicAlias).toBe(saved.publicAlias);
+    expect(JSON.stringify(result)).not.toMatch(/Identité|Privée|"authorId"/);
   });
   it.each([null, { isEmailVerified: false }])(
     'refuse de commenter sans compte vérifié (%p)',

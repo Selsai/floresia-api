@@ -49,6 +49,47 @@ const mailLayout = (
 
 @Injectable()
 export class MailService {
+  async sendAdminNotification(
+    id: string,
+    title: string,
+    payload: Record<string, unknown>,
+  ) {
+    const recipient = process.env.ADMIN_NOTIFICATION_EMAIL;
+    if (recipient !== 'contact.floresia@gmail.com')
+      throw new Error('Admin notifications disabled');
+    const labels: Record<string, string> = {
+      name: 'Compte',
+      email: 'Email',
+      reference: 'Référence',
+      amount: 'Montant TTC (€)',
+      content: 'Publication',
+      rating: 'Note / 5',
+      alias: 'Nom affiché',
+    };
+    const rows = Object.entries(labels)
+      .filter(([key]) => payload[key] != null)
+      .map(
+        ([key, label]) =>
+          `<p style="text-align:left;line-height:1.6"><strong>${label}</strong><br>${escapeHtml(String(payload[key])).replace(/\n/g, '<br>')}</p>`,
+      )
+      .join('');
+    const result = await this.resend.emails.send(
+      {
+        from: this.sender,
+        to: recipient,
+        subject: `Florésia : ${title}`,
+        html: mailLayout(
+          escapeHtml(title),
+          'Une nouvelle activité a été enregistrée sur Florésia.',
+          rows,
+          'Notification de gestion Florésia. Les paiements du site sont en mode test.',
+        ),
+      },
+      { idempotencyKey: `admin/${id}` },
+    );
+    if (result.error || !result.data?.id)
+      throw new Error('Admin email delivery unavailable');
+  }
   private resend = new Resend(process.env.RESEND_API_KEY);
   private from = process.env.MAIL_FROM || 'no-reply@floresia.fr';
   private get sender() {

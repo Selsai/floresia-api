@@ -34,6 +34,21 @@ describe('CommentsController : contrats HTTP et droits', () => {
       .expect(401);
     expect(service.remove).not.toHaveBeenCalled();
   });
+  it('reconnaît le lecteur authentifié sans fermer la lecture publique', async () => {
+    await request(fixture.app.getHttpServer())
+      .get('/comments/article/p')
+      .set('Authorization', 'Bearer invalide')
+      .expect(200);
+    expect(service.findByArticle).toHaveBeenLastCalledWith('p', undefined);
+    await request(fixture.app.getHttpServer())
+      .get('/comments/article/p')
+      .set('Authorization', 'Bearer ' + fixture.userToken)
+      .expect(200);
+    expect(service.findByArticle).toHaveBeenLastCalledWith(
+      'p',
+      expect.objectContaining({ userId: 'user-test' }),
+    );
+  });
   it('applique les droits du compte utilisateur', async () => {
     await request(fixture.app.getHttpServer())
       .delete('/comments/p')

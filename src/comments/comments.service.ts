@@ -8,6 +8,36 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { createFlowerAlias } from '../common/flower-alias';
+import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
+
+type CommentRecord = {
+  authorId: string;
+  isAnonymous?: boolean;
+  publicAlias?: string | null;
+  author?: { id: string; firstName: string; lastName: string };
+  replies?: CommentRecord[];
+};
+
+function presentComment(
+  comment: CommentRecord,
+  viewer?: AuthenticatedUser,
+): Record<string, unknown> {
+  const { authorId, author, replies, ...content } = comment;
+  return {
+    ...content,
+    authorId: comment.isAnonymous ? undefined : authorId,
+    author: comment.isAnonymous
+      ? { firstName: comment.publicAlias || 'Fleur anonyme', lastName: '' }
+      : author,
+    canDelete: Boolean(
+      viewer && (viewer.userId === authorId || viewer.role === 'ADMIN'),
+    ),
+    ...(replies
+      ? { replies: replies.map((reply) => presentComment(reply, viewer)) }
+      : {}),
+  };
+}
 
 const AUTHOR_SELECT = { id: true, firstName: true, lastName: true };
 
@@ -15,8 +45,8 @@ const AUTHOR_SELECT = { id: true, firstName: true, lastName: true };
 export class CommentsService {
   constructor(private prisma: PrismaService) {}
 
-  findByArticle(articleId: string) {
-    return this.prisma.comment.findMany({
+  async findByArticle(articleId: string, viewer?: AuthenticatedUser) {
+    const comments = await this.prisma.comment.findMany({
       where: { articleId, parentId: null },
       include: {
         author: { select: AUTHOR_SELECT },
@@ -31,12 +61,13 @@ export class CommentsService {
       },
       orderBy: { createdAt: 'desc' },
     });
+    return (comments || []).map((comment) => presentComment(comment, viewer));
   }
 
   // Pour l'autocomplete du @ : uniquement les gens ayant déjà commenté l'article
   async getCommentersForArticle(articleId: string) {
     const comments = await this.prisma.comment.findMany({
-      where: { articleId },
+      where: { articleId, isAnonymous: false },
       select: { author: { select: AUTHOR_SELECT } },
       distinct: ['authorId'],
     });
@@ -89,7 +120,7 @@ export class CommentsService {
       }
     }
 
-    return this.prisma.comment.create({
+    const comment = await this.prisma.comment.create({
       data: {
         content: dto.content,
         articleId: dto.articleId,
@@ -97,12 +128,18 @@ export class CommentsService {
         parentId: dto.parentId,
         taggedUserId: dto.taggedUserId,
         imageUrl,
+        ...(dto.isAnonymous
+          ? { isAnonymous: true, publicAlias: createFlowerAlias() }
+          : {}),
       },
       include: {
         author: { select: AUTHOR_SELECT },
         taggedUser: { select: AUTHOR_SELECT },
       },
     });
+    return comment
+      ? presentComment(comment, { userId: authorId, role: 'USER', email: '' })
+      : comment;
   }
 
   async remove(id: string, userId: string, role: string) {

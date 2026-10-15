@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   Post,
   UploadedFile,
@@ -25,6 +26,7 @@ import {
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../auth/roles/roles.guard';
 import { Roles } from '../auth/roles/roles.decorator';
 import {
@@ -39,8 +41,13 @@ export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
   @Get('article/:articleId')
-  findByArticle(@Param('articleId') articleId: string) {
-    return this.commentsService.findByArticle(articleId);
+  @Header('Cache-Control', 'private, no-store')
+  @UseGuards(OptionalJwtAuthGuard)
+  findByArticle(
+    @Param('articleId') articleId: string,
+    @CurrentUser() user?: AuthenticatedUser,
+  ) {
+    return this.commentsService.findByArticle(articleId, user);
   }
 
   @Get('article/:articleId/commenters')

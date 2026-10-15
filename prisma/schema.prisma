@@ -3,6 +3,18 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model AdminNotification {
+  id String @id
+  title String
+  payload Json
+  createdAt DateTime @default(now())
+  sentAt DateTime?
+  nextAttemptAt DateTime @default(now())
+  attempts Int @default(0)
+  firstAttemptAt DateTime?
+  @@index([sentAt, nextAttemptAt])
+}
+
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
@@ -141,6 +153,8 @@ model Article {
 model Comment {
   id           String    @id @default(cuid())
   content      String
+  isAnonymous  Boolean   @default(false)
+  publicAlias  String?
   articleId    String
   authorId     String
   createdAt    DateTime  @default(now())
@@ -157,6 +171,7 @@ model Comment {
 model Testimonial {
   id         String   @id @default(cuid())
   authorName String
+  isAnonymous Boolean @default(false)
   content    String
   imageUrl   String?
   rating     Int      @default(5)
