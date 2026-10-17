@@ -292,7 +292,7 @@ describe('Application Florésia : commande et paiement via HTTP', () => {
       .post('/payment/webhook')
       .set('stripe-signature', 'test-signature')
       .send({ id: 'evt' })
-      .expect(201);
+      .expect(200);
     const confirmed = await request(app.getHttpServer())
       .get('/orders/' + id)
       .set('Authorization', 'Bearer ' + token)
@@ -302,7 +302,7 @@ describe('Application Florésia : commande et paiement via HTTP', () => {
       .post('/payment/webhook')
       .set('stripe-signature', 'test-signature')
       .send({ id: 'evt' })
-      .expect(201);
+      .expect(200);
     expect(orders.get(id)?.status).toBe('PAID');
   });
   it('calcule une composition à la tige et conserve le détail du panier', async () => {
