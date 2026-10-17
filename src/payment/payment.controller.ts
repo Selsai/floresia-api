@@ -3,6 +3,7 @@ import {
   Controller,
   BadRequestException,
   HttpCode,
+  Logger,
   Post,
   Body,
   Req,
@@ -23,6 +24,8 @@ import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
 @ApiTags('Payment')
 @Controller('payment')
 export class PaymentController {
+  private readonly logger = new Logger(PaymentController.name);
+
   constructor(private readonly paymentService: PaymentService) {}
 
   @ApiBearerAuth()
@@ -63,8 +66,18 @@ export class PaymentController {
     @Headers('stripe-signature') signature: string,
   ) {
     if (!req.rawBody) {
+      this.logger.warn('Webhook Stripe refusé : corps brut indisponible.');
       throw new BadRequestException('Corps brut du webhook indisponible.');
     }
-    return this.paymentService.handleWebhookEvent(req.rawBody, signature);
+    try {
+      return await this.paymentService.handleWebhookEvent(req.rawBody, signature);
+    } catch (error) {
+      const reason =
+        error instanceof Error ? error.message : 'Erreur inconnue du webhook.';
+      this.logger.warn(
+        `Webhook Stripe refusé (signature: ${signature ? 'présente' : 'absente'}, octets: ${req.rawBody.length}) : ${reason}`,
+      );
+      throw error;
+    }
   }
 }
