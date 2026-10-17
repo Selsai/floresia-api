@@ -4,7 +4,6 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
-import * as express from 'express';
 import { join } from 'path';
 import { AppModule } from './app.module';
 
@@ -12,10 +11,6 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true, // nécessaire pour vérifier la signature du webhook Stripe
   });
-
-  // Webhook Stripe : doit recevoir le corps BRUT (non parsé en JSON)
-  // Cette ligne doit être placée AVANT useGlobalPipes / tout parsing JSON
-  app.use('/payment/webhook', express.raw({ type: 'application/json' }));
 
   // Helmet : ajoute des en-têtes HTTP de sécurité
   app.use(
