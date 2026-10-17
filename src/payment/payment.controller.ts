@@ -2,6 +2,7 @@
 import {
   Controller,
   BadRequestException,
+  HttpCode,
   Post,
   Body,
   Req,
@@ -56,6 +57,7 @@ export class PaymentController {
   }
 
   @Post('webhook')
+  @HttpCode(200)
   handleWebhook(
     @Req() req: RawBodyRequest<Request>,
     @Headers('stripe-signature') signature: string,

@@ -20,4 +20,8 @@ describe('AppController', () => {
       expect(appController.getHello()).toBe('Hello World!');
     });
   });
+
+  it('exposes a health status for the hosting platform', () => {
+    expect(appController.getHealth()).toEqual({ status: 'ok' });
+  });
 });

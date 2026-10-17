@@ -92,7 +92,7 @@ describe('PaymentController : identité et webhook brut', () => {
       .set('Content-Type', 'application/json')
       .set('stripe-signature', 'signature-test')
       .send(body)
-      .expect(201);
+      .expect(200);
     expect(service.handleWebhookEvent).toHaveBeenCalledWith(
       Buffer.from(body),
       'signature-test',

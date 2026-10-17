@@ -404,7 +404,7 @@ describe('PaymentService : autorisation du paiement', () => {
     await service.handleWebhookEvent(Buffer.from('{}'), 'signature');
     expect(sendOrderConfirmation).not.toHaveBeenCalled();
   });
-  it('permet à Stripe de réessayer l’email sans perdre le paiement confirmé', async () => {
+  it('accuse réception à Stripe même si l’email de confirmation doit être réessayé', async () => {
     webhook();
     findUnique.mockResolvedValueOnce(order).mockResolvedValueOnce({
       ...order,
@@ -416,7 +416,8 @@ describe('PaymentService : autorisation du paiement', () => {
     );
     await expect(
       service.handleWebhookEvent(Buffer.from('{}'), 'signature'),
-    ).rejects.toThrow('Email indisponible');
+    ).resolves.toEqual({ received: true });
+    await Promise.resolve();
     expect(updateMany).toHaveBeenCalledWith({
       where: { id: order.id, status: 'PENDING' },
       data: { status: 'PAID' },

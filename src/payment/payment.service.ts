@@ -261,7 +261,12 @@ export class PaymentService {
       const session = event.data.object;
       const orderId = session.metadata?.orderId;
       if (orderId && session.payment_status === 'paid') {
-        await this.applyPaidSession(session);
+        // Stripe reçoit son accusé de réception dès que le paiement est mémorisé.
+        // L'email est secondaire : il ne doit ni provoquer un 5xx, ni un timeout webhook.
+        await this.applyPaidSession(session, {
+          propagateEmailFailure: false,
+          waitForEmail: false,
+        });
       }
     }
     return { received: true };
@@ -344,7 +349,13 @@ export class PaymentService {
     };
   }
 
-  private async applyPaidSession(session: Stripe.Checkout.Session) {
+  private async applyPaidSession(
+    session: Stripe.Checkout.Session,
+    {
+      propagateEmailFailure = true,
+      waitForEmail = true,
+    }: { propagateEmailFailure?: boolean; waitForEmail?: boolean } = {},
+  ) {
     const orderId = session.metadata?.orderId;
     if (!orderId || session.payment_status !== 'paid')
       throw new BadRequestException('Paiement non confirmé.');
@@ -378,30 +389,34 @@ export class PaymentService {
         items: { include: { product: true } },
       },
     });
-    if (
-      confirmed &&
-      !confirmed.user?.accountErasedAt &&
-      ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(
-        confirmed.status,
-      ) &&
-      !confirmed.confirmationEmailSentAt
-    ) {
-      try {
-        await this.mail.sendOrderConfirmation(confirmed);
-        await this.prisma.order.updateMany({
-          where: { id: orderId, confirmationEmailSentAt: null },
-          data: { confirmationEmailSentAt: new Date() },
-        });
-      } catch (error) {
-        const reason =
-          error instanceof Error && error.name === 'OrderEmailDeliveryError'
-            ? error.message
-            : 'Erreur temporaire du service email.';
-        this.logger.warn(
-          `Paiement confirmé ; ${reason} Confirmation à réessayer.`,
-        );
-        throw error;
+    const deliverConfirmation = async () => {
+      if (
+        confirmed &&
+        !confirmed.user?.accountErasedAt &&
+        ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(
+          confirmed.status,
+        ) &&
+        !confirmed.confirmationEmailSentAt
+      ) {
+        try {
+          await this.mail.sendOrderConfirmation(confirmed);
+          await this.prisma.order.updateMany({
+            where: { id: orderId, confirmationEmailSentAt: null },
+            data: { confirmationEmailSentAt: new Date() },
+          });
+        } catch (error) {
+          const reason =
+            error instanceof Error && error.name === 'OrderEmailDeliveryError'
+              ? error.message
+              : 'Erreur temporaire du service email.';
+          this.logger.warn(
+            `Paiement confirmé ; ${reason} Confirmation à réessayer.`,
+          );
+          if (propagateEmailFailure) throw error;
+        }
       }
-    }
+    };
+    if (waitForEmail) await deliverConfirmation();
+    else void deliverConfirmation();
   }
 }
